@@ -39,14 +39,3 @@ self.addEventListener('fetch', (event) => {
     }).catch(() => caches.match(event.request))
   );
 });
-      }
-      return networkResponse;
-    }).catch(() => caches.match(event.request))
-  );
-});
-        return networkResponse;
-      }).catch(() => cachedResponse);
-      return cachedResponse || networkFetch;
-    })
-  );
-});
