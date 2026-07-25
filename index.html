@@ -291,6 +291,263 @@
       </div>
 
       <!-- Cheques -->
+      <div id="cheques-section" class="section-page"    .auth-error-overlay.show { display: flex; }
+    .auth-error-box { background: #1e293b; border-radius: 20px; padding: 24px 20px; width: 100%; max-width: 400px; border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
+    .auth-error-text { font-size: 14px; color: #f8fafc; line-height: 1.6; margin-bottom: 20px; white-space: pre-line; }
+    .auth-error-actions { display: flex; flex-direction: column; gap: 10px; }
+    .btn-error-forgot { width: 100%; padding: 13px; border-radius: 12px; border: none; background: #0284c7; color: white; font-weight: bold; font-size: 14px; cursor: pointer; }
+    .btn-error-register { width: 100%; padding: 13px; border-radius: 12px; border: none; background: #334155; color: #cbd5e1; font-weight: bold; font-size: 14px; cursor: pointer; }
+    .btn-error-close { margin-top: 14px; font-size: 13px; color: #64748b; cursor: pointer; display: inline-block; }
+
+    .account-switcher { display: flex; gap: 8px; padding: 12px 16px 0; overflow-x: auto; }
+    .account-chip { display: flex; align-items: center; gap: 6px; background: #1e293b; border: 1px solid #334155; padding: 7px 14px; border-radius: 20px; font-size: 12px; color: #94a3b8; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .account-chip.active { background: #0284c7; color: white; border-color: #0284c7; font-weight: bold; }
+    .account-chip-remove { color: #f87171; font-weight: bold; margin-right: 2px; }
+    .account-chip-add { background: #334155; color: #38bdf8; font-weight: bold; border: 1px dashed #0284c7; font-size: 16px; padding: 6px 16px; }
+
+    header { background: #1e293b; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #334155; position: sticky; top: 0; z-index: 100; color: white; }
+    .header-row-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .header-title { font-size: 19px; font-weight: 800; }
+    .header-title span { color: #38bdf8; }
+    .header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    
+    .lang-btn, .settings-top-btn { background: #334155; color: #38bdf8; border: 1px solid #0284c7; font-weight: bold; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+    .btn-logout-top { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .notif-btn, .alerts-btn { position: relative; background: #334155; border: none; font-size: 16px; padding: 6px 10px; border-radius: 50%; cursor: pointer; color: white; }
+    .notif-badge, .alert-badge-top { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #1e293b; }
+    .alert-badge-top { background: #eab308; }
+
+    @keyframes slideDown {
+      0% { opacity: 0; transform: translateY(-15px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .alert-box { background: #1e293b; border: 1px solid #38bdf8; border-right: 5px solid #38bdf8; padding: 14px 16px; margin: 16px; border-radius: 12px; display: none; color: white; max-height: 280px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .alert-box.show { display: block; animation: slideDown 0.3s ease-out forwards; }
+    .alert-box h4 { color: #38bdf8; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+    
+    .important-alerts-box { background: #1e293b; border: 1px solid #eab308; border-right: 5px solid #eab308; padding: 14px 16px; margin: 16px; border-radius: 12px; display: none; color: white; max-height: 320px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .important-alerts-box.show { display: block; animation: slideDown 0.3s ease-out forwards; }
+    .important-alerts-box h4 { color: #fde047; font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+
+    .alert-sub-item { background: #0f172a; padding: 10px 12px; border-radius: 8px; margin-top: 8px; font-size: 13px; border: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; color: #cbd5e1; transition: transform 0.2s; }
+    .alert-sub-item.urgent { border-color: #ef4444; background: rgba(239, 68, 68, 0.08); }
+    .countdown-timer { font-size: 11px; color: #38bdf8; font-weight: bold; background: #1e293b; padding: 3px 6px; border-radius: 6px; border: 1px solid #334155; margin-top: 3px; display: inline-block; }
+
+    .container { padding: 16px; max-width: 500px; margin: 0 auto; }
+    .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; }
+    .menu-card { background: #1e293b; border-radius: 20px; padding: 24px 16px; text-align: center; border: 1px solid #334155; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; color: white; position: relative; transition: transform 0.2s; }
+    .menu-card:hover { transform: translateY(-3px); }
+    .menu-card .icon { font-size: 36px; margin-bottom: 8px; }
+    .menu-card h3 { font-size: 16px; font-weight: 700; }
+    .menu-card p { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .menu-badge { position: absolute; top: 12px; left: 12px; background: #0284c7; color: white; font-size: 12px; font-weight: bold; padding: 2px 8px; border-radius: 10px; }
+
+    .card { background: #1e293b; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: 1px solid #334155; color: white; }
+    .card h2 { font-size: 18px; margin-bottom: 16px; text-align: center; font-weight: 700; }
+    
+    .form-group { margin-bottom: 12px; position: relative; }
+    input, select, textarea { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #334155; font-size: 14px; outline: none; background: #0f172a; color: #ffffff; }
+    textarea { height: 90px; resize: none; }
+    .btn-submit { width: 100%; padding: 14px; border-radius: 12px; border: none; background: #0284c7; color: white; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 8px; }
+    .search-input { margin-bottom: 12px; }
+    
+    .custom-suggestions, .price-suggestions {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      margin-top: 4px;
+      z-index: 50;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+    .suggestion-item {
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #cbd5e1;
+      cursor: pointer;
+      border-bottom: 1px solid #1e293b;
+      transition: background 0.15s;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover, .suggestion-item:active {
+      background: #1e293b;
+      color: #38bdf8;
+    }
+
+    .item-card { background: #0f172a; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin-top: 12px; }
+    .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .item-title { font-weight: bold; font-size: 16px; color: #ffffff; }
+    .item-badge { background: #0369a1; color: #e0f2fe; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+    .item-sub { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+    .item-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-top: 1px dashed #334155; padding-top: 10px; }
+    
+    .btn-delete { background: #451a1a; color: #f87171; border: 1px solid #7f1d1d; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    .btn-edit { background: #1e3a4a; color: #38bdf8; border: 1px solid #0369a1; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    .cancel-edit-link { font-size: 13px; color: #f87171; text-align: center; margin-top: 10px; cursor: pointer; display: none; text-decoration: underline; }
+    .cancel-edit-link.show { display: block; }
+    .btn-map-link { background: #0284c7; color: white; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-pdf { width: 100%; padding: 14px; background: #10b981; color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-danger-all { width: 100%; padding: 14px; background: #ef4444; color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 10px; }
+
+    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b; border-top: 1px solid #334155; display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
+    .nav-item { text-align: center; color: #94a3b8; font-size: 11px; text-decoration: none; cursor: pointer; flex: 1; }
+    .nav-item.active { color: #38bdf8; font-weight: bold; }
+    .nav-item span { display: block; font-size: 20px; margin-bottom: 2px; }
+
+    .section-page { display: none; }
+    .section-page.active { display: block; }
+    #app-content { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- 🔒 Login / Register Section -->
+  <div id="auth-section">
+    <div class="top-brand-bar">
+      deeplite clim
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="auth-lang-switch" id="auth-lang-switch" onclick="toggleLanguage()">
+          <span class="lang-opt" id="lang-opt-ar">AR</span>
+          <span class="lang-opt" id="lang-opt-fr">FR</span>
+        </div>
+        <div style="background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 11px;">Deep Lite</div>
+      </div>
+    </div>
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <h2 id="auth-main-title">تسجيل <span>الدخول</span></h2>
+        <p id="auth-desc">تسيير شركة تركيب وصيانة المكيفات</p>
+        
+        <input type="email" id="auth-email" class="auth-input" placeholder="البريد الإلكتروني (Gmail)">
+        <input type="password" id="auth-password" class="auth-input" placeholder="كلمة السر">
+
+        <!-- عناصر خاصة بإنشاء الحساب فقط -->
+        <div id="register-extra-fields" style="display: none;">
+          <button class="btn-send-code" onclick="sendVerificationEmail()" id="btn-send-code-txt">📤 إرسال رمز التحقق لـ Gmail</button>
+          <input type="text" id="auth-code-input" class="auth-input" placeholder="أدخل رمز التحقق المكون من 4 أرقام">
+        </div>
+
+        <!-- أزرار التبديل حسب الوضع -->
+        <div id="login-buttons-box">
+          <button class="btn-login-main" onclick="handleLogin()" id="btn-login-txt">دخول</button>
+          <span class="forgot-password-link" onclick="handleForgotPassword()" id="forgot-pass-txt">نسيت كلمة السر؟</span>
+          <div class="switch-mode-text" onclick="switchToRegister()">ليس لديك حساب؟ <span id="switch-to-reg-txt">إنشاء حساب جديد</span></div>
+        </div>
+
+        <div id="register-buttons-box" style="display: none;">
+          <button class="btn-register-main" onclick="handleRegister()" id="btn-reg-txt">إتمام إنشاء الحساب</button>
+          <div class="switch-mode-text" onclick="switchToLogin()">لديك حساب بالفعل؟ <span id="switch-to-log-txt">تسجيل الدخول</span></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ⚠️ Auth Error Modal (نسيت كلمة السر / إنشاء حساب) -->
+  <div id="auth-error-modal" class="auth-error-overlay">
+    <div class="auth-error-box">
+      <div id="auth-error-text" class="auth-error-text"></div>
+      <div class="auth-error-actions">
+        <button id="auth-error-forgot-btn" class="btn-error-forgot" onclick="handleForgotPassword(); closeAuthErrorModal();">نسيت كلمة السر؟</button>
+        <button id="auth-error-register-btn" class="btn-error-register" onclick="switchToRegister(); closeAuthErrorModal();">إنشاء حساب جديد</button>
+      </div>
+      <span class="btn-error-close" onclick="closeAuthErrorModal()">✕ إغلاق</span>
+    </div>
+  </div>
+
+  <!-- ➕ Add Account Modal -->
+  <div id="add-account-modal" class="auth-error-overlay">
+    <div class="auth-error-box">
+      <h3 style="font-size:17px; margin-bottom:14px; color:#fff;" id="add-account-title">إضافة حساب جديد</h3>
+      <input type="email" id="add-account-email" class="auth-input" placeholder="البريد الإلكتروني" style="margin-bottom:10px;">
+      <input type="password" id="add-account-password" class="auth-input" placeholder="كلمة السر" style="margin-bottom:16px;">
+      <div class="auth-error-actions">
+        <button class="btn-error-forgot" onclick="submitAddAccount()" id="add-account-submit-btn">دخول وإضافة</button>
+      </div>
+      <span class="btn-error-close" onclick="closeAddAccountModal()">✕ إغلاق</span>
+    </div>
+  </div>
+
+  <!-- 🖨️ Print Language Choice Modal -->
+  <div id="print-lang-modal" class="auth-error-overlay">
+    <div class="auth-error-box">
+      <h3 style="font-size:17px; margin-bottom:16px; color:#fff;">اختر لغة التقرير / Choisir la langue</h3>
+      <div class="auth-error-actions">
+        <button class="btn-error-forgot" onclick="generatePDFReport('ar')">🇲🇦 العربية</button>
+        <button class="btn-error-forgot" onclick="generatePDFReport('fr')">🇫🇷 Français</button>
+      </div>
+      <span class="btn-error-close" onclick="closePrintLangModal()">✕ إغلاق / Fermer</span>
+    </div>
+  </div>
+
+  <!-- 📱 Main App -->
+  <div id="app-content">
+    <header>
+      <div class="header-row-top">
+        <div class="header-title" onclick="openSection('home-section')" style="cursor:pointer">Deep <span>Lite Clim</span></div>
+        <button class="btn-logout-top" onclick="logout()" id="logout-btn-txt">خروج</button>
+      </div>
+      <div class="header-actions">
+        <button class="settings-top-btn" onclick="openSection('settings-section')">⚙️</button>
+        <button class="lang-btn" onclick="toggleLanguage()" id="lang-toggle-btn">FR 🇫🇷</button>
+        <button class="notif-btn" onclick="toggleNotifs()">🔔 <span class="notif-badge" id="notif-count">0</span></button>
+        <button class="alerts-btn" onclick="toggleImportantAlerts()">⏰ <span class="alert-badge-top" id="alert-count">0</span></button>
+      </div>
+    </header>
+
+    <div class="account-switcher" id="account-switcher"></div>
+
+    <div class="alert-box" id="alert-box">
+      <h4 id="box-title-1">معلومات حسابك الإجمالية: <span style="font-size:12px; cursor:pointer;" onclick="toggleNotifs()" id="close-box-1">✕ إغلاق</span></h4>
+      <div id="alert-content">جاري التحميل...</div>
+    </div>
+
+    <div class="important-alerts-box" id="important-alerts-box">
+      <h4 id="box-title-2">التنبيهات والوقت المتبقي: <span style="font-size:12px; cursor:pointer;" onclick="toggleImportantAlerts()" id="close-box-2">✕ إغلاق</span></h4>
+      <div id="important-alerts-content">جاري التحميل...</div>
+    </div>
+
+    <div class="container">
+      
+      <!-- Home -->
+      <div id="home-section" class="section-page active">
+        <input type="text" id="home-search" class="search-input" placeholder="🔍 بحث..." oninput="onGlobalSearchInput(this.value)">
+        <div id="global-search-results" style="display:none;"></div>
+        <div class="grid-menu" id="home-grid-menu">
+          <div class="menu-card" onclick="openSection('cheques-section')">
+            <div class="menu-badge" id="badge-cheques">0</div>
+            <div class="icon">💳</div>
+            <h3 id="m-chk-t">الشيكات</h3>
+            <p id="m-chk-d">متابعة واستحقاق الشيكات</p>
+          </div>
+          <div class="menu-card" onclick="openSection('stock-section')">
+            <div class="menu-badge" id="badge-stock">0</div>
+            <div class="icon">📦</div>
+            <h3 id="m-stk-t">المخزن</h3>
+            <p id="m-stk-d">قطع الغيار والسلع</p>
+          </div>
+          <div class="menu-card" onclick="openSection('install-section')">
+            <div class="menu-badge" id="badge-install">0</div>
+            <div class="icon">🛠️</div>
+            <h3 id="m-srv-t">الخدمات والزبائن</h3>
+            <p id="m-srv-d">تركيب، تنظيف، إصلاح</p>
+          </div>
+          <div class="menu-card" onclick="openSection('notes-section')">
+            <div class="menu-badge" id="badge-notes">0</div>
+            <div class="icon">📝</div>
+            <h3 id="m-nts-t">الملاحظات</h3>
+            <p id="m-nts-d">كناش الملاحظات والمهام</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cheques -->
       <div id="cheques-section" class="section-page">
         <div class="card">
           <h2 id="chk-form-t">تسجيل شيك جديد</h2>
