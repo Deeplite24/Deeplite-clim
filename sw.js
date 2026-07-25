@@ -1,4 +1,4 @@
-const CACHE_NAME = 'deeplite-clim-v1';
+const CACHE_NAME = 'deeplite-clim-v2';
 const urlsToCache = [
   './index.html',
   './manifest.json',
@@ -27,13 +27,18 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
     return;
   }
+  // الشبكة أولاً: إيلا كاين انترنت، دايماً كنجيبو النسخة الجديدة ونحدثو الكاش.
+  // إيلا ماكاينش انترنت، كنرجعو للنسخة المخزنة (offline fallback).
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const networkFetch = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-        }
+    fetch(event.request).then((networkResponse) => {
+      if (networkResponse && networkResponse.status === 200) {
+        const responseClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+      }
+      return networkResponse;
+    }).catch(() => caches.match(event.request))
+  );
+});
         return networkResponse;
       }).catch(() => cachedResponse);
       return cachedResponse || networkFetch;
