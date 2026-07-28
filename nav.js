@@ -92,7 +92,21 @@
         </div>`;
       }).join('');
       updateShortcutToggleButtons();
+      adjustBottomNavFit();
     }
+
+    // كيتوسط الشريط السفلي (نموذج space-evenly) ملي الاختصارات كاملة داخلة فعرض الشاشة،
+    // وكيرجع للتمرير العادي (flex-start) ملي يكونو بزاف ومكايفينش المجال.
+    function adjustBottomNavFit() {
+      const navEl = document.querySelector('nav.bottom-nav');
+      if (!navEl) return;
+      navEl.classList.remove('nav-fit');
+      const fits = navEl.scrollWidth <= navEl.clientWidth + 1;
+      navEl.classList.toggle('nav-fit', fits);
+    }
+
+    window.addEventListener('resize', adjustBottomNavFit);
+    window.addEventListener('orientationchange', adjustBottomNavFit);
 
     function addNavShortcut(id) {
       const list = getNavShortcuts();

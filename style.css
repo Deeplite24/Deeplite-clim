@@ -233,6 +233,7 @@
     .btn-danger-all { width: 100%; padding: 14px; background: #ef4444; color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 10px; }
 
     nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b; border-top: 1px solid #334155; display: flex; justify-content: flex-start; padding: 10px 4px; z-index: 100; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; scrollbar-width: none; -ms-overflow-style: none; }
+    nav.bottom-nav.nav-fit { justify-content: space-evenly; }
     nav.bottom-nav::-webkit-scrollbar { display: none; }
     #nav-custom-items { display: contents; }
     .nav-item-custom { position: relative; }
@@ -241,6 +242,10 @@
     .shortcut-picker-box.show { display: block; animation: slideDown 0.3s ease-out forwards; }
     .shortcut-picker-row { display: flex; align-items: center; gap: 10px; background: #0f172a; padding: 10px 12px; border-radius: 8px; margin-top: 8px; cursor: pointer; border: 1px solid #334155; }
     .shortcut-picker-row span.sp-icon { font-size: 18px; }
+    .shortcut-picker-section-label { font-size: 12px; color: #94a3b8; margin: 12px 0 4px; padding-inline-start: 2px; }
+    .shortcut-picker-row-active { cursor: default; }
+    .shortcut-picker-row-active button { background: transparent; border: 1px solid #475569; color: #e2e8f0; border-radius: 6px; padding: 3px 9px; cursor: pointer; font-size: 12px; }
+    .shortcut-picker-row-active button:disabled { opacity: .3; cursor: default; }
     .shortcut-picker-empty { text-align: center; color: #94a3b8; padding: 10px; font-size: 13px; }
     .nav-item { text-align: center; color: #94a3b8; font-size: 11px; text-decoration: none; cursor: pointer; flex: 0 0 auto; min-width: 62px; scroll-snap-align: start; }
     .nav-item.active { color: #38bdf8; font-weight: bold; }
