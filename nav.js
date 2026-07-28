@@ -132,18 +132,53 @@
       updateShortcutToggleButtons();
     }
 
+    // إعادة ترتيب اختصار: dir = -1 (لأعلى/قبل) أو 1 (لأسفل/بعد)
+    function moveNavShortcut(id, dir) {
+      const list = getNavShortcuts();
+      const i = list.indexOf(id);
+      const j = i + dir;
+      if (i === -1 || j < 0 || j >= list.length) return;
+      [list[i], list[j]] = [list[j], list[i]];
+      saveNavShortcuts(list);
+      renderNavShortcuts();
+      if (document.getElementById('shortcut-picker-box').classList.contains('show')) openShortcutPicker();
+    }
+
     function openShortcutPicker() {
       document.getElementById('sp-title-t').innerHTML = (currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> أضف اختصارًا إلى الشريط السفلي ' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Ajouter un raccourci ') + `<span style="font-size:12px; cursor:pointer;" onclick="closeShortcutPicker()">✕ ${currentLang === 'ar' ? 'إغلاق' : 'Fermer'}</span>`;
       const active = getNavShortcuts();
       const remaining = availableNavShortcuts.filter(s => !active.includes(s.id));
       const content = document.getElementById('shortcut-picker-content');
+
+      let activeHtml = '';
+      if (active.length) {
+        const activeLabel = currentLang === 'ar' ? 'النشطة (رتّبها بالأسهم)' : 'Actifs (réordonner avec les flèches)';
+        activeHtml = `<div class="shortcut-picker-section-label">${activeLabel}</div>` + active.map((id, idx) => {
+          const cfg = availableNavShortcuts.find(s => s.id === id);
+          if (!cfg) return '';
+          const label = currentLang === 'ar' ? cfg.labelAr : cfg.labelFr;
+          const upDisabled = idx === 0 ? 'disabled' : '';
+          const downDisabled = idx === active.length - 1 ? 'disabled' : '';
+          return `<div class="shortcut-picker-row shortcut-picker-row-active">
+            <span class="sp-icon">${svgIcon(cfg.icon, 18)}</span> <span style="flex:1">${label}</span>
+            <button type="button" onclick="moveNavShortcut('${id}', -1)" ${upDisabled} title="${currentLang === 'ar' ? 'لأعلى' : 'Monter'}">▲</button>
+            <button type="button" onclick="moveNavShortcut('${id}', 1)" ${downDisabled} title="${currentLang === 'ar' ? 'لأسفل' : 'Descendre'}">▼</button>
+            <button type="button" onclick="removeNavShortcut('${id}')" title="${currentLang === 'ar' ? 'إزالة' : 'Retirer'}">✕</button>
+          </div>`;
+        }).join('');
+      }
+
+      let remainingHtml = '';
       if (remaining.length === 0) {
-        content.innerHTML = `<div class="shortcut-picker-empty">${currentLang === 'ar' ? 'لقد أضفت جميع الاختصارات المتاحة.' : 'Vous avez déjà ajouté tous les raccourcis disponibles.'}</div>`;
+        remainingHtml = active.length ? '' : `<div class="shortcut-picker-empty">${currentLang === 'ar' ? 'لقد أضفت جميع الاختصارات المتاحة.' : 'Vous avez déjà ajouté tous les raccourcis disponibles.'}</div>`;
       } else {
-        content.innerHTML = remaining.map(s => `<div class="shortcut-picker-row" onclick="addNavShortcut('${s.id}')">
+        const addLabel = currentLang === 'ar' ? 'إضافة اختصار' : 'Ajouter un raccourci';
+        remainingHtml = `<div class="shortcut-picker-section-label">${addLabel}</div>` + remaining.map(s => `<div class="shortcut-picker-row" onclick="addNavShortcut('${s.id}')">
           <span class="sp-icon">${svgIcon(s.icon, 18)}</span> <span>${currentLang === 'ar' ? s.labelAr : s.labelFr}</span>
         </div>`).join('');
       }
+
+      content.innerHTML = activeHtml + remainingHtml;
       closeAllFloatingPopups();
       document.getElementById('shortcut-picker-box').classList.add('show');
       syncFloatingBackdrop();
