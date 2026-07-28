@@ -325,3 +325,7 @@
     body.light-mode .avatar-option { background: #f8fafc; border-color: #e2e8f0; }
     body.light-mode .avatar-option.selected { background: #e0f2fe; border-color: #0284c7; }
     body.light-mode #device-profile-photo-preview img, body.light-mode #profile-photo-preview img { border-color: #0284c7; }
+.shortcut-picker-section-label{font-size:12px;opacity:.65;margin:10px 0 4px;padding-inline-start:2px}
+.shortcut-picker-row-active{display:flex;align-items:center;gap:6px}
+.shortcut-picker-row-active button{background:transparent;border:1px solid currentColor;border-radius:6px;padding:2px 8px;opacity:.8;cursor:pointer}
+.shortcut-picker-row-active button:disabled{opacity:.25;cursor:default}
