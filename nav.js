@@ -29,12 +29,54 @@
       return `deeplite_nav_shortcuts_${currentUid || 'guest'}`;
     }
 
-    function getNavShortcuts() {
+    // الكاش المحلي (localStorage) — كيبقى دايما آخر نسخة معروفة، باش يبان الشريط بسرعة
+    // من غير ما نتسناو Firestore، ويخدم كـ fallback فحالة انقطاع الاتصال.
+    function getLocalNavShortcuts() {
       try { return JSON.parse(localStorage.getItem(navShortcutsStorageKey()) || '[]'); } catch (e) { return []; }
     }
 
+    // navShortcutsCache = null معناه مازال ماجاش الجواب من Firestore، فنستعملو localStorage مؤقتا.
+    // من بعد ما يجي أول snapshot، هاد المتغير كيبقى هو المصدر الحقيقي (يتزامن بين الأجهزة).
+    let navShortcutsCache = null;
+    let navShortcutsUnsub = null;
+
+    function getNavShortcuts() {
+      return navShortcutsCache !== null ? navShortcutsCache : getLocalNavShortcuts();
+    }
+
     function saveNavShortcuts(list) {
+      navShortcutsCache = list;
       localStorage.setItem(navShortcutsStorageKey(), JSON.stringify(list));
+      if (currentUid) {
+        db.collection('users').doc(currentUid).collection('settings').doc('navShortcuts')
+          .set({ list, updatedAt: new Date().toISOString() }, { merge: true })
+          .catch(() => {}); // إذا مافيهاش نت، Firestore persistence غادي تحفظها وتبعتها منين يرجع الاتصال
+      }
+    }
+
+    // كيتشغل عند تسجيل الدخول (فـ init.js) باش يزامن الاختصارات بين الأجهزة ديال نفس الحساب.
+    function startNavShortcutsListener(uid) {
+      navShortcutsUnsub = db.collection('users').doc(uid).collection('settings').doc('navShortcuts')
+        .onSnapshot(doc => {
+          if (doc.exists && Array.isArray(doc.data().list)) {
+            navShortcutsCache = doc.data().list;
+            localStorage.setItem(navShortcutsStorageKey(), JSON.stringify(navShortcutsCache));
+          } else {
+            // ماكاينش وثيقة فـ Firestore بعد (أول مرة، أو حساب قديم) — نرفعو النسخة المحلية إلى فوق
+            const localList = getLocalNavShortcuts();
+            navShortcutsCache = localList;
+            if (localList.length) {
+              db.collection('users').doc(uid).collection('settings').doc('navShortcuts')
+                .set({ list: localList, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+            }
+          }
+          renderNavShortcuts();
+        }, () => {}); // fallback: إذا وقع خطأ فـ Firestore، الشريط كيبقى خدام بـ localStorage عادي
+    }
+
+    function stopNavShortcutsListener() {
+      if (navShortcutsUnsub) { navShortcutsUnsub(); navShortcutsUnsub = null; }
+      navShortcutsCache = null;
     }
 
     function renderNavShortcuts() {
