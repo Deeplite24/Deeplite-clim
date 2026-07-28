@@ -1,5 +1,5 @@
 // Service Worker ديال Deep Lite Clim — كيخلي التطبيق يخدم بلا انترنت
-const CACHE_NAME = 'deeplite-clim-cache-v2';
+const CACHE_NAME = 'deeplite-clim-cache-v3';
 
 // الملفات الأساسية اللي خاصها تتخزن مباشرة عند أول تحميل
 const APP_SHELL = [
@@ -27,24 +27,20 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// استراتيجية: جرب الكاش أولا (سريع)، وفنفس الوقت جدد الكاش من الأنترنت فالخلفية
+// استراتيجية: جرب الأنترنت أولا (باش التحديثات تبان مباشرة)، وإلا فشلت (بلا نت) رجع النسخة المخزنة
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(req).then(cachedResponse => {
-      const networkFetch = fetch(req)
-        .then(networkResponse => {
-          if (networkResponse && networkResponse.status === 200) {
-            const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
-          }
-          return networkResponse;
-        })
-        .catch(() => cachedResponse); // بلا انترنت → رجع النسخة المخزنة
-
-      return cachedResponse || networkFetch;
-    })
+    fetch(req)
+      .then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(req)) // بلا انترنت → رجع النسخة المخزنة
   );
 });
