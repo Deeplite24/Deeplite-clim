@@ -478,6 +478,9 @@
             <h2 id="groups-list-title-t" style="margin:0;"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="8.5" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.6"/><path d="M3 19c.7-3 3-4.8 5.7-4.8S13.8 16 14.5 19"/><path d="M14.9 14.5c2.1.4 3.6 1.9 4.1 4.4"/></svg> المجموعات</h2>
             <button onclick="openCreateGroupModal()" style="background:#0284c7; color:#fff; border:none; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer;"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> <span id="groups-new-btn-t">مجموعة جديدة</span></button>
           </div>
+          <div class="shortcut-add-row">
+            <button class="section-shortcut-add-btn" id="shortcut-add-btn-groups" onclick="toggleNavShortcut('groups')">+ إضافة</button>
+          </div>
           <div style="display:flex; gap:8px; margin-bottom:14px;">
             <input type="text" id="groups-join-code-input" placeholder="🔑 هل لديك رمز مجموعة؟ أدخله هنا...">
             <button onclick="joinGroupByCode()" style="background:#059669; color:#fff; border:none; border-radius:12px; padding:0 16px; font-weight:bold; cursor:pointer;">➤</button>
@@ -588,6 +591,9 @@
         <div class="card">
           <h2 id="set-t"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M4.2 12H6.6M17.4 12h2.4M6.3 6.3l1.7 1.7M16 16l1.7 1.7M17.7 6.3 16 8M8 16l-1.7 1.7"/></svg> إعدادات التطبيق والتقارير</h2>
           <p style="font-size: 13px; color: #94a3b8; margin-bottom: 16px; text-align: center;" id="set-desc">يمكنك طباعة كاع معلومات التطبيق في ملف PDF منظم أو مسح البيانات.</p>
+          <div class="shortcut-add-row">
+            <button class="section-shortcut-add-btn" id="shortcut-add-btn-settings" onclick="toggleNavShortcut('settings')">+ إضافة</button>
+          </div>
           <button class="btn-pdf" style="background:#334155; color:#38bdf8;" onclick="openProfileModal(false)" id="btn-profile-txt"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7"/></svg> تعديل الملف الشخصي</button>
           <button class="btn-pdf" style="background:#eab308;" onclick="requestNotificationPermission()" id="btn-notif-txt"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3a5 5 0 0 0-5 5v3.3L5.2 15h13.6L17 11.3V8a5 5 0 0 0-5-5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg> تفعيل إشعارات الهاتف</button>
           <button class="btn-pdf" onclick="printPDFReport()" id="btn-pdf-txt"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg> طباعة تقرير PDF شامل</button>

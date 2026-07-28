@@ -112,7 +112,9 @@
       'shortcut-add-btn-install': 'install',
       'shortcut-add-btn-notes': 'notes',
       'shortcut-add-btn-employees': 'employees',
-      'shortcut-add-btn-chat': 'chat'
+      'shortcut-add-btn-chat': 'chat',
+      'shortcut-add-btn-groups': 'groups',
+      'shortcut-add-btn-settings': 'settings'
     };
 
     function updateShortcutToggleButtons() {
