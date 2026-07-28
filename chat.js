@@ -823,31 +823,56 @@
       syncFloatingBackdrop();
     }
 
-    // ==================== تسجيل التعديلات (يتطبق التعديل مباشرة، وكيبان شكون بدلو ومتى + القيمة قبل التعديل) ====================
+    // ==================== نظام الموافقة على التعديلات ====================
+    // - إذا كان اللي كيعدل هو نفسو صاحب العنصر الأصلي (أو عنصر قديم بلا صاحب مسجل): التعديل يتطبق مباشرة.
+    // - إذا كان شخص آخر: التعديل كيبقى "معلق" (pendingEdit) — حتى ولو تعدل بزاف ديال المرات قبل الموافقة،
+    //   كيبقى دايما تعديل معلق واحد (كيتبدل بآخر نسخة مقترحة) — حتى يوافق عليه صاحب العنصر الأصلي.
+    // - fallback: إذا صاحب العنصر ماجاوبش (تلف الهاتف، تبدل الموظف، إلخ)، من بعد 48 ساعة أي عضو آخر
+    //   كيقدر يوافق أو يرفض، باش التعديل ما يبقاش معلق للأبد.
+    const PENDING_EDIT_FALLBACK_HOURS = 48;
+    function pendingEditFallbackOpen(pendingEdit) {
+      if (!pendingEdit || !pendingEdit.proposedAt) return false;
+      const elapsedMs = Date.now() - new Date(pendingEdit.proposedAt).getTime();
+      return elapsedMs > PENDING_EDIT_FALLBACK_HOURS * 3600 * 1000;
+    }
+    function canActOnPendingEdit(item) {
+      if (!item || !item.pendingEdit) return false;
+      const myId = getDeviceId();
+      if (!item.createdByDeviceId || item.createdByDeviceId === myId) return true;
+      return pendingEditFallbackOpen(item.pendingEdit);
+    }
+
     function submitPendingEdit(col, id, data) {
       if (!currentUid) return;
+      const myId = getDeviceId();
       const p = getDeviceProfile();
       const name = p ? deviceDisplayName(p) : currentUserLabel();
       const item = (globalData[col] || []).find(x => x.id === id);
-      const prevData = {};
-      if (item) {
-        Object.keys(data).forEach(k => { prevData[k] = item[k] !== undefined ? item[k] : null; });
+      const isCreator = !item || !item.createdByDeviceId || item.createdByDeviceId === myId;
+      if (isCreator) {
+        const prevData = {};
+        if (item) {
+          Object.keys(data).forEach(k => { prevData[k] = item[k] !== undefined ? item[k] : null; });
+        }
+        const updates = Object.assign({}, data, {
+          previousData: prevData,
+          updatedAt: new Date().toISOString(),
+          updatedBy: name,
+          pendingEdit: firebase.firestore.FieldValue.delete()
+        });
+        db.collection('users').doc(currentUid).collection(col).doc(id).update(updates);
+      } else {
+        db.collection('users').doc(currentUid).collection(col).doc(id).update({
+          pendingEdit: { data, proposedBy: myId, proposedByName: name, proposedAt: new Date().toISOString() }
+        });
       }
-      const updates = Object.assign({}, data, {
-        previousData: prevData,
-        updatedAt: new Date().toISOString(),
-        updatedBy: name,
-        pendingEdit: firebase.firestore.FieldValue.delete()
-      });
-      db.collection('users').doc(currentUid).collection(col).doc(id).update(updates);
     }
 
     function approveEdit(col, id) {
       if (!currentUid) return;
       const item = (globalData[col] || []).find(x => x.id === id);
       if (!item || !item.pendingEdit) return;
-      const myId = getDeviceId();
-      if (item.pendingEdit.proposedBy === myId) return;
+      if (!canActOnPendingEdit(item)) return;
       const prevData = {};
       Object.keys(item.pendingEdit.data).forEach(k => { prevData[k] = item[k] !== undefined ? item[k] : null; });
       const updates = Object.assign({}, item.pendingEdit.data, {
@@ -863,8 +888,7 @@
       if (!currentUid) return;
       const item = (globalData[col] || []).find(x => x.id === id);
       if (!item || !item.pendingEdit) return;
-      const myId = getDeviceId();
-      if (item.pendingEdit.proposedBy === myId) return;
+      if (!canActOnPendingEdit(item)) return;
       if (!confirm(translations[currentLang].confirmReject)) return;
       db.collection('users').doc(currentUid).collection(col).doc(id).update({ pendingEdit: firebase.firestore.FieldValue.delete() });
     }
@@ -872,13 +896,12 @@
     function renderPendingEditBox(col, d) {
       if (!d.pendingEdit) return '';
       const t = translations[currentLang];
-      const myId = getDeviceId();
-      const isMine = d.pendingEdit.proposedBy === myId;
+      const canApprove = canActOnPendingEdit(d);
       let dateStr = '';
       try { dateStr = new Date(d.pendingEdit.proposedAt).toLocaleString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
       let actionsHtml;
-      if (isMine) {
-        actionsHtml = `<div class="pending-edit-waiting">${t.pendingWaitingOther}</div>`;
+      if (!canApprove) {
+        actionsHtml = `<div class="pending-edit-waiting">${t.pendingWaitingOther}<div style="font-size:11px; opacity:0.8; margin-top:4px;">${t.pendingFallbackHint}</div></div>`;
       } else {
         actionsHtml = `<div class="pending-edit-actions">
           <button class="btn-approve" onclick="approveEdit('${col}','${d.id}')">${t.btnApprove}</button>
@@ -887,6 +910,7 @@
       }
       return `<div class="pending-edit-box"><div class="pending-edit-label">⏳ ${t.pendingEditFrom} ${d.pendingEdit.proposedByName} ${dateStr ? '(' + dateStr + ')' : ''}</div>${actionsHtml}</div>`;
     }
+
 
     function sortWithPendingLast(arr) {
       return arr.map((v, i) => ({ v, i })).sort((a, b) => {
@@ -904,6 +928,14 @@
       } catch (e) {}
       const label = currentLang === 'ar' ? 'آخر تعديل' : 'Dernière modif.';
       return `<div class="item-sub" style="color:#38bdf8;">🕓 ${label}: ${d.updatedBy || '-'}${dateStr ? ' | ' + dateStr : ''}</div>`;
+    }
+
+    // كيبين شكون هو صاحب العنصر الأصلي (الجهاز لي زاد العنصر أول مرة) — هو هو لي عندو الحق
+    // يوافق/يرفض على أي تعديل مقترح من جهاز آخر. هاد المعلومة ثابتة، ما كتبدلش حتى لو تعدل العنصر بعد ذلك.
+    function formatCreatedInfo(d) {
+      if (!d.createdByName) return '';
+      const label = currentLang === 'ar' ? 'أضيف من طرف' : 'Ajouté par';
+      return `<div class="item-sub" style="color:#94a3b8;">👤 ${label}: ${d.createdByName}</div>`;
     }
 
     const previousValueFieldLabels = {
