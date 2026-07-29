@@ -860,11 +860,11 @@
           updatedBy: name,
           pendingEdit: firebase.firestore.FieldValue.delete()
         });
-        db.collection('users').doc(currentUid).collection(col).doc(id).update(updates);
+        db.collection('users').doc(currentUid).collection(col).doc(id).update(updates).catch(showSaveError);
       } else {
         db.collection('users').doc(currentUid).collection(col).doc(id).update({
           pendingEdit: { data, proposedBy: myId, proposedByName: name, proposedAt: new Date().toISOString() }
-        });
+        }).catch(showSaveError);
       }
     }
 

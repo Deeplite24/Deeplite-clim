@@ -4,6 +4,23 @@
     // بعض النصوص فالتطبيق فيها رموز SVG مبنية باش تبان فالواجهة (innerHTML).
     // alert() وإشعارات المتصفح (Notification) ماكيقدروش يعرضو HTML، فكيبان الكود خام.
     // هاد الدالة كتمسح أي وسم HTML/SVG قبل ما النص يوصل لهادشي.
+    // تنبيه صغير (toast) ملي تفشل عملية حفظ/حذف/تعديل
+    let saveErrorToastTimeout = null;
+    function showSaveError(err) {
+      console.error('Firestore error:', err);
+      let box = document.getElementById('save-error-toast');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'save-error-toast';
+        document.body.appendChild(box);
+      }
+      const msg = currentLang === 'ar' ? 'فشل الحفظ، تحقق من الاتصال وحاول من جديد' : 'Échec de l\'enregistrement, vérifiez la connexion et réessayez';
+      box.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:-3px;margin-inline-end:5px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="17" r="0.7" fill="currentColor" stroke="none"/></svg> ${msg}`;
+      box.classList.add('show');
+      clearTimeout(saveErrorToastTimeout);
+      saveErrorToastTimeout = setTimeout(() => box.classList.remove('show'), 4000);
+    }
+
     // حالة فارغة موحدة الشكل لكل القوائم (أيقونة + رسالة + تلميح)
     function emptyStateHTML(iconSvg, msgAr, msgFr, hintAr, hintFr) {
       const msg = currentLang === 'ar' ? msgAr : msgFr;

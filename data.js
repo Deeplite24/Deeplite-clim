@@ -272,7 +272,7 @@
       } else {
         db.collection('users').doc(currentUid).collection('cheques').add({ num, owner, amount, type, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
           document.getElementById('chk-num').value = ''; document.getElementById('chk-owner').value = ''; document.getElementById('chk-amount').value = ''; document.getElementById('chk-type').selectedIndex = 0; document.getElementById('chk-date').value = '';
-        });
+        }).catch(showSaveError);
       }
     }
 
@@ -289,7 +289,7 @@
       } else {
         db.collection('users').doc(currentUid).collection('stock').add({ name, qty, price, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
           document.getElementById('item-name').value = ''; document.getElementById('item-qty').value = ''; document.getElementById('item-price').value = ''; document.getElementById('item-date').value = '';
-        });
+        }).catch(showSaveError);
       }
     }
 
@@ -308,7 +308,7 @@
       } else {
         db.collection('users').doc(currentUid).collection('installations').add({ client, phone, map, clim, service, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
           document.getElementById('client-name').value = ''; document.getElementById('client-phone').value = ''; document.getElementById('client-map').value = ''; document.getElementById('clim-type').value = ''; document.getElementById('service-type').selectedIndex = 0; document.getElementById('install-date').value = '';
-        });
+        }).catch(showSaveError);
       }
     }
 
@@ -323,14 +323,14 @@
       } else {
         db.collection('users').doc(currentUid).collection('notes').add({ text, datetime, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
           document.getElementById('note-text').value = ''; document.getElementById('note-datetime').value = '';
-        });
+        }).catch(showSaveError);
       }
     }
 
     function deleteItem(col, id) {
       if (!currentUid) return;
       if (confirm(currentLang === 'ar' ? "هل أنت متأكد من الحذف؟\nÊtes-vous sûr de vouloir supprimer ?" : "Êtes-vous sûr de vouloir supprimer ?\nهل أنت متأكد من الحذف؟")) { 
-        db.collection('users').doc(currentUid).collection(col).doc(id).delete(); 
+        db.collection('users').doc(currentUid).collection(col).doc(id).delete().catch(showSaveError); 
       }
     }
 
