@@ -1,7 +1,16 @@
     // ==================== Bootstrap final : تشغيل التطبيق بعد تحميل كل الوحدات ====================
     // هاد الملف كيتحمل فالأخير على قصد، حيت الكود لي فيه (خصوصا onAuthStateChanged) كيستدعي
     // دوال معرفة فملفات أخرين (data.js, ui.js, chat.js...) وخاصهم يكونو تعرفو قبل ما يتشغل هاد الكود.
+    // كيخبي شاشة الترحيب (splash) بمجرد ما فايربيس يجاوب على حالة الدخول
+    function hideAppSplash() {
+      const splash = document.getElementById('app-splash');
+      if (!splash) return;
+      splash.classList.add('splash-hide');
+      setTimeout(() => splash.remove(), 400);
+    }
+
     auth.onAuthStateChanged(user => {
+      hideAppSplash();
       if (user) {
         currentUid = user.uid;
         document.getElementById('auth-section').style.display = 'none';
@@ -13,12 +22,10 @@
         startGroupsListeners();
         startMembersListener(currentUid);
         startPrivateChatsListener(currentUid);
-        startNavShortcutsListener(currentUid);
         upsertMember();
         initExternalFeatures();
       } else {
         currentUid = null;
-        stopNavShortcutsListener();
         if (ownedGroupsUnsub) { ownedGroupsUnsub(); ownedGroupsUnsub = null; }
         if (externalGroupsUnsub) { externalGroupsUnsub(); externalGroupsUnsub = null; }
         if (groupMsgsUnsub) { groupMsgsUnsub(); groupMsgsUnsub = null; }
