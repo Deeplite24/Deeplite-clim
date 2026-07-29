@@ -219,7 +219,7 @@
     .section-pdf-btn { background: #334155; border: 1px solid #ef4444; color: #ef4444; font-weight: 900; font-size: 11px; padding: 6px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
     body.light-mode .section-pdf-btn { background: #e2e8f0; }
     .shortcut-add-row { margin-bottom: 14px; }
-    .section-shortcut-add-btn { background: #0284c7; border: none; color: #ffffff; font-weight: 800; font-size: 13px; padding: 11px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+    .section-shortcut-add-btn { background: #0284c7; border: none; color: #ffffff; font-weight: 800; font-size: 13px; padding: 11px 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
     .section-shortcut-add-btn:active { background: #0369a1; }
     .section-shortcut-add-btn.is-added { background: #7f1d1d; }
     .section-shortcut-add-btn.is-added:active { background: #991b1b; }
