@@ -38,6 +38,12 @@
     const __nativeAlert = window.alert.bind(window);
     window.alert = function (msg) { __nativeAlert(stripTags(msg)); };
     let globalData = { cheques: [], stock: [], installations: [], notes: [] };
+    // كيبقى true لكل قسم حتى توصل أول نتيجة من Firestore، باش نبينو سبينر عوض ما نبينو "لا توجد عناصر" بغلط
+    let dataLoading = { cheques: true, stock: true, installations: true, notes: true };
+
+    function loadingStateHTML() {
+      return `<div class="loading-state"><div class="loading-spinner"></div></div>`;
+    }
     let currentUid = null;
 
     // 🕓 من بدل شنو ومتى — باش نتفاداو تعارض البيانات بين الأجهزة

@@ -1,6 +1,8 @@
     function loadUserData(uid) {
+      dataLoading = { cheques: true, stock: true, installations: true, notes: true };
       renderNavShortcuts();
       db.collection('users').doc(uid).collection('cheques').onSnapshot(snapshot => {
+        dataLoading.cheques = false;
         if (snapshot.empty) {
           globalData.cheques = [];
         } else {
@@ -12,6 +14,7 @@
       });
 
       db.collection('users').doc(uid).collection('stock').onSnapshot(snapshot => {
+        dataLoading.stock = false;
         if (snapshot.empty) {
           globalData.stock = [];
         } else {
@@ -23,6 +26,7 @@
       });
 
       db.collection('users').doc(uid).collection('installations').onSnapshot(snapshot => {
+        dataLoading.installations = false;
         if (snapshot.empty) {
           globalData.installations = [];
         } else {
@@ -34,10 +38,9 @@
       });
 
       db.collection('users').doc(uid).collection('notes').onSnapshot(snapshot => {
-        const list = document.getElementById('notes-list');
+        dataLoading.notes = false;
         if (snapshot.empty) {
           globalData.notes = [];
-          list.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:10px;">${currentLang==='ar'?'لا توجد ملاحظات':'Aucune note'}</div>`;
         } else {
           const arr = [];
           snapshot.forEach(doc => { const d = doc.data(); d.id = doc.id; arr.push(d); });
@@ -58,6 +61,10 @@
       const t = translations[currentLang];
       const list = document.getElementById('cheques-list');
       if (!list) return;
+      if (dataLoading.cheques) {
+        list.innerHTML = loadingStateHTML();
+        return;
+      }
       if (globalData.cheques.length === 0) {
         list.innerHTML = emptyStateHTML(
           '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.2"/><line x1="2" y1="9.5" x2="22" y2="9.5"/></svg>',
@@ -85,6 +92,10 @@
       const t = translations[currentLang];
       const list = document.getElementById('stock-list');
       if (!list) return;
+      if (dataLoading.stock) {
+        list.innerHTML = loadingStateHTML();
+        return;
+      }
       if (globalData.stock.length === 0) {
         list.innerHTML = emptyStateHTML(
           '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
@@ -112,6 +123,10 @@
       const t = translations[currentLang];
       const list = document.getElementById('install-list');
       if (!list) return;
+      if (dataLoading.installations) {
+        list.innerHTML = loadingStateHTML();
+        return;
+      }
       if (globalData.installations.length === 0) {
         list.innerHTML = emptyStateHTML(
           '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.4 17.6 3 21m2-13 3 3m10.6 8.6L21 21m-6.3-9.7 5.6-5.6a4.2 4.2 0 0 1-5.5 5.5l-6.9 6.9a1.5 1.5 0 0 1-2.1-2.1l6.9-6.9a4.2 4.2 0 0 1 5.5-5.5l-3.6 3.6z"/></svg>',
@@ -147,6 +162,10 @@
       const t = translations[currentLang];
       const list = document.getElementById('notes-list');
       if (!list) return;
+      if (dataLoading.notes) {
+        list.innerHTML = loadingStateHTML();
+        return;
+      }
       if (globalData.notes.length === 0) {
         list.innerHTML = emptyStateHTML(
           '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="14" height="18" rx="1.4"/><line x1="7" y1="8" x2="14" y2="8"/><line x1="7" y1="12" x2="11.5" y2="12"/></svg>',
