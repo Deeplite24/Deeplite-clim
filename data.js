@@ -114,7 +114,7 @@
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('cheques', d)}
           ${renderPendingEditBox('cheques', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditCheque('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button><button class="btn-delete" onclick="deleteItem('cheques', '${d.id}')">${t.delBtn}</button></span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditCheque('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('cheques', d.id, t)}</span></div>
         </div>`).join('');
       }
       updateNotificationBoxes();
@@ -149,7 +149,7 @@
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('stock', d)}
           ${renderPendingEditBox('stock', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditStock('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button><button class="btn-delete" onclick="deleteItem('stock', '${d.id}')">${t.delBtn}</button></span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditStock('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('stock', d.id, t)}</span></div>
         </div>`;
         }).join('');
       }
@@ -189,7 +189,7 @@
           ${formatUpdateInfo(d)}
             ${renderPreviousValueBox('installations', d)}
             ${renderPendingEditBox('installations', d)}
-            <div class="item-actions">${mapButtonHtml}<span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditInstallation('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button><button class="btn-delete" onclick="deleteItem('installations', '${d.id}')">${t.delBtn}</button></span></div>
+            <div class="item-actions">${mapButtonHtml}<span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditInstallation('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('installations', d.id, t)}</span></div>
           </div>`;
         }).join('');
       }
@@ -221,7 +221,7 @@
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('notes', d)}
           ${renderPendingEditBox('notes', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditNote('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button><button class="btn-delete" onclick="deleteItem('notes', '${d.id}')">${t.delBtn}</button></span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditNote('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('notes', d.id, t)}</span></div>
         </div>`).join('');
       }
       updateNotificationBoxes();
@@ -389,8 +389,16 @@
       }
     }
 
+    function deleteBtnHtml(col, id, t) {
+      return isCurrentUserAdmin() ? `<button class="btn-delete" onclick="deleteItem('${col}','${id}')">${t.delBtn}</button>` : '';
+    }
+
     function deleteItem(col, id) {
       if (!currentUid) return;
+      if (!isCurrentUserAdmin()) {
+        alert(currentLang === 'ar' ? 'الحذف متاح فقط للمسؤول، تواصل معه.' : "La suppression est réservée à l'administrateur, contactez-le.");
+        return;
+      }
       if (confirm(currentLang === 'ar' ? "هل أنت متأكد من الحذف؟\nÊtes-vous sûr de vouloir supprimer ?" : "Êtes-vous sûr de vouloir supprimer ?\nهل أنت متأكد من الحذف؟")) { 
         db.collection('users').doc(currentUid).collection(col).doc(id).delete().catch(showSaveError); 
       }
@@ -398,6 +406,10 @@
 
     function confirmAndDeleteEverything() {
       if (!currentUid) return;
+      if (!isCurrentUserAdmin()) {
+        alert(currentLang === 'ar' ? 'هذا الإجراء متاح فقط للمسؤول.' : "Cette action est réservée à l'administrateur.");
+        return;
+      }
       let msg1 = currentLang === 'ar' ? "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M12 3 2 20h20z'/><line x1='12' y1='9.5' x2='12' y2='14'/><circle cx='12' cy='17' r='0.7' fill='currentColor' stroke='none'/></svg> تحذير خطير: هل أنت متأكد تماماً أنك تريد مسح كاع بيانات التطبيق؟\n<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M12 3 2 20h20z'/><line x1='12' y1='9.5' x2='12' y2='14'/><circle cx='12' cy='17' r='0.7' fill='currentColor' stroke='none'/></svg> Attention : Voulez-vous vraiment tout supprimer ?" : "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M12 3 2 20h20z'/><line x1='12' y1='9.5' x2='12' y2='14'/><circle cx='12' cy='17' r='0.7' fill='currentColor' stroke='none'/></svg> Attention : Voulez-vous vraiment tout supprimer ?\n<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M12 3 2 20h20z'/><line x1='12' y1='9.5' x2='12' y2='14'/><circle cx='12' cy='17' r='0.7' fill='currentColor' stroke='none'/></svg> تحذير خطير: هل أنت متأكد تماماً أنك تريد مسح كاع بيانات التطبيق؟";
       if (confirm(msg1)) {
         let promptMsg = currentLang === 'ar' ? "لأمانة بياناتك، اكتب كلمة (مسح) أو (supprimer) للتأكيد:\nTapez (supprimer) pour confirmer :" : "Tapez (supprimer) pour confirmer :\nلأمانة بياناتك، اكتب كلمة (مسح) أو (supprimer) للتأكيد:";

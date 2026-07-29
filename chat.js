@@ -7,11 +7,24 @@
       const p = getDeviceProfile();
       if (!p || (!p.firstName && !p.lastName)) return;
       const myId = getDeviceId();
-      db.collection('users').doc(currentUid).collection('members').doc(myId).set({
+      const memberRef = db.collection('users').doc(currentUid).collection('members').doc(myId);
+      const baseData = {
         firstName: p.firstName || '', lastName: p.lastName || '', phone: p.phone || '',
         avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto,
         lastActive: new Date().toISOString()
-      }, { merge: true }).catch(() => {});
+      };
+      memberRef.get().then(doc => {
+        if (!doc.exists) {
+          // أول مرة كيتصاوب فيها بروفايل هاد الجهاز: إلا ماكاين حتى عضو آخر بعد، هو أول واحد
+          // إذن كيولي "مسؤول" تلقائياً؛ وإلا كاين عضاء آخرين، كيدخل كـ"عامل عادي".
+          db.collection('users').doc(currentUid).collection('members').limit(1).get().then(snap => {
+            baseData.role = snap.empty ? 'admin' : 'member';
+            memberRef.set(baseData, { merge: true }).catch(() => {});
+          }).catch(() => { memberRef.set(baseData, { merge: true }).catch(() => {}); });
+        } else {
+          memberRef.set(baseData, { merge: true }).catch(() => {});
+        }
+      }).catch(() => { memberRef.set(baseData, { merge: true }).catch(() => {}); });
     }
 
     function startMembersListener(uid) {
@@ -116,11 +129,41 @@
     }
 
     // ==================== Employees Management (حظر / إضافة للدردشة الجماعية) ====================
+    // ملاحظة توافق: الأعضاء اللي زادوا قبل هاد الميزة ماعندهمش حقل role — كنعتبروهم "مسؤول" باش
+    // ماتوقفش عليهم الصلاحيات القديمة فجأة. غير role === 'member' الصريح هو لي كيقيد الصلاحيات.
+    function memberIsAdmin(m) { return !m || m.role !== 'member'; }
+
+    function isCurrentUserAdmin() {
+      const myId = getDeviceId();
+      const me = teamMembersCache.find(x => x.id === myId);
+      return memberIsAdmin(me);
+    }
+
+    function countAdmins() {
+      return teamMembersCache.filter(memberIsAdmin).length;
+    }
+
+    function toggleMemberRole(memberId) {
+      if (!currentUid || !isCurrentUserAdmin()) return;
+      const m = teamMembersCache.find(x => x.id === memberId);
+      if (!m) return;
+      const isAdmin = memberIsAdmin(m);
+      if (isAdmin && countAdmins() <= 1) {
+        alert(currentLang === 'ar' ? 'لا يمكن تنزيل هذا العضو، يجب أن يبقى مسؤول واحد على الأقل في الحساب.' : 'Impossible de rétrograder ce membre, il doit rester au moins un administrateur.');
+        return;
+      }
+      const newRole = isAdmin ? 'member' : 'admin';
+      if (!confirm(currentLang === 'ar'
+        ? (isAdmin ? 'هل تريد تنزيل هذا العضو إلى "عامل عادي"؟ لن يتمكن بعدها من حذف العناصر أو إدارة العمال.' : 'هل تريد ترقية هذا العضو إلى "مسؤول"؟ سيحصل على كامل الصلاحيات.')
+        : (isAdmin ? 'Rétrograder ce membre en "Employé" ? Il ne pourra plus supprimer d\'éléments ni gérer les employés.' : 'Promouvoir ce membre en "Administrateur" ? Il obtiendra tous les droits.'))) return;
+      db.collection('users').doc(currentUid).collection('members').doc(memberId).set({ role: newRole }, { merge: true }).catch(() => {});
+    }
+
     function isMemberBlocked(m) { return !!(m && m.blocked); }
     function isMemberInGroup(m) { return !m || m.inGroupChat !== false; }
 
     function toggleMemberBlock(memberId) {
-      if (!currentUid) return;
+      if (!currentUid || !isCurrentUserAdmin()) return;
       const m = teamMembersCache.find(x => x.id === memberId);
       const newVal = !isMemberBlocked(m);
       if (newVal && !confirm(currentLang === 'ar' ? 'هل أنت متأكد من رغبتك في حظر هذا الموظف؟ لن يتمكن من إرسال رسائل خاصة أو جماعية.' : 'Confirmer le blocage de cet employé ? Il ne pourra plus envoyer de messages (privés ou de groupe).')) return;
@@ -128,7 +171,7 @@
     }
 
     function toggleMemberGroup(memberId) {
-      if (!currentUid) return;
+      if (!currentUid || !isCurrentUserAdmin()) return;
       const m = teamMembersCache.find(x => x.id === memberId);
       const newVal = !isMemberInGroup(m);
       db.collection('users').doc(currentUid).collection('members').doc(memberId).set({ inGroupChat: newVal }, { merge: true }).catch(() => {});
@@ -143,20 +186,27 @@
       const myCode = p && p.code ? p.code : null;
       const others = teamMembersCache.filter(m => m.id !== myId);
 
+      const iAmAdmin = isCurrentUserAdmin();
       let html = others.map(m => {
         const avatarHtml = m.avatarIsPhoto && m.avatar ? `<img src="${m.avatar}">` : (m.avatar || '🙂');
         const blocked = isMemberBlocked(m);
+        const mIsAdmin = memberIsAdmin(m);
+        const roleBadge = `<span class="emp-name-badge" style="background:${mIsAdmin ? 'rgba(56,189,248,0.16)' : 'rgba(148,163,184,0.16)'}; color:${mIsAdmin ? '#38bdf8' : '#94a3b8'};">${mIsAdmin ? (currentLang === 'ar' ? 'مسؤول' : 'Administrateur') : (currentLang === 'ar' ? 'عامل عادي' : 'Employé')}</span>`;
+        const roleBtn = iAmAdmin ? `<button class="emp-btn" onclick="toggleMemberRole('${m.id}')">${mIsAdmin ? (currentLang === 'ar' ? 'تنزيل لعامل عادي' : 'Rétrograder') : (currentLang === 'ar' ? 'ترقية لمسؤول' : 'Promouvoir admin')}</button>` : '';
+        const blockBtn = iAmAdmin ? `<button class="emp-btn ${blocked ? 'emp-danger' : ''}" onclick="toggleMemberBlock('${m.id}')">${blocked ? (currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg> فك الحظر' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg> Débloquer') : (currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> حظر' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Bloquer')}</button>` : '';
         return `<div class="emp-item ${blocked ? 'emp-blocked' : ''}">
           <div class="emp-top-row">
             <div class="members-list-avatar clickable" onclick="showMemberInfo('${m.id}')">${avatarHtml}</div>
             <div class="members-list-info">
               <div class="members-list-name clickable" onclick="showMemberInfo('${m.id}')">${deviceDisplayName(m)}</div>
+              ${roleBadge}
               ${blocked ? `<span class="emp-name-badge">${currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> محظور' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Bloqué'}</span>` : ''}
             </div>
           </div>
           <div class="emp-actions">
             <button class="emp-btn" onclick="openPrivateChat('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 6l9 7 9-7"/></svg> ${currentLang === 'ar' ? 'دردشة خاصة' : 'Chat privé'}</button>
-            <button class="emp-btn ${blocked ? 'emp-danger' : ''}" onclick="toggleMemberBlock('${m.id}')">${blocked ? (currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg> فك الحظر' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg> Débloquer') : (currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> حظر' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Bloquer')}</button>
+            ${blockBtn}
+            ${roleBtn}
           </div>
         </div>`;
       }).join('');
