@@ -59,7 +59,11 @@
       const list = document.getElementById('cheques-list');
       if (!list) return;
       if (globalData.cheques.length === 0) {
-        list.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:10px;">${currentLang==='ar'?'لا توجد شيكات':'Aucun chèque'}</div>`;
+        list.innerHTML = emptyStateHTML(
+          '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.2"/><line x1="2" y1="9.5" x2="22" y2="9.5"/></svg>',
+          'لا توجد شيكات بعد', 'Aucun chèque pour le moment',
+          'دوس على "إضافة" باش تزيد أول شيك', 'Appuyez sur "Ajouter" pour créer le premier'
+        );
       } else {
         list.innerHTML = sortWithPendingLast(globalData.cheques).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="cheques-item-${d.id}">
           <div class="item-header"><span class="item-title">#${d.num} - ${d.owner}</span><span class="item-badge">${d.amount} DH</span></div>
@@ -82,7 +86,11 @@
       const list = document.getElementById('stock-list');
       if (!list) return;
       if (globalData.stock.length === 0) {
-        list.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:10px;">${currentLang==='ar'?'المخزن فارغ':'Stock vide'}</div>`;
+        list.innerHTML = emptyStateHTML(
+          '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
+          'المخزن فارغ حاليا', 'Le stock est vide',
+          'دوس على "إضافة" باش تزيد أول قطعة', 'Appuyez sur "Ajouter" pour créer le premier article'
+        );
       } else {
         list.innerHTML = sortWithPendingLast(globalData.stock).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="stock-item-${d.id}">
           <div class="item-header"><span class="item-title">${d.name}</span><span class="item-badge">Qty: ${d.qty} | ${d.price || 0} DH</span></div>
@@ -105,7 +113,11 @@
       const list = document.getElementById('install-list');
       if (!list) return;
       if (globalData.installations.length === 0) {
-        list.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:10px;">${currentLang==='ar'?'لا توجد مواعيد':'Aucun rendez-vous'}</div>`;
+        list.innerHTML = emptyStateHTML(
+          '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.4 17.6 3 21m2-13 3 3m10.6 8.6L21 21m-6.3-9.7 5.6-5.6a4.2 4.2 0 0 1-5.5 5.5l-6.9 6.9a1.5 1.5 0 0 1-2.1-2.1l6.9-6.9a4.2 4.2 0 0 1 5.5-5.5l-3.6 3.6z"/></svg>',
+          'لا توجد مواعيد بعد', 'Aucun rendez-vous pour le moment',
+          'دوس على "إضافة" باش تزيد أول موعد', 'Appuyez sur "Ajouter" pour créer le premier'
+        );
       } else {
         list.innerHTML = sortWithPendingLast(globalData.installations).map(d => {
           let mapButtonHtml = '';
@@ -136,7 +148,11 @@
       const list = document.getElementById('notes-list');
       if (!list) return;
       if (globalData.notes.length === 0) {
-        list.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:10px;">${currentLang==='ar'?'لا توجد ملاحظات':'Aucune note'}</div>`;
+        list.innerHTML = emptyStateHTML(
+          '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="14" height="18" rx="1.4"/><line x1="7" y1="8" x2="14" y2="8"/><line x1="7" y1="12" x2="11.5" y2="12"/></svg>',
+          'لا توجد ملاحظات بعد', 'Aucune note pour le moment',
+          'دوس على "إضافة" باش تزيد أول ملاحظة', 'Appuyez sur "Ajouter" pour créer la première'
+        );
       } else {
         list.innerHTML = sortWithPendingLast(globalData.notes).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="notes-item-${d.id}">
           <div class="item-title" style="white-space: pre-wrap;">${d.text}</div>

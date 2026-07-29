@@ -4,6 +4,17 @@
     // بعض النصوص فالتطبيق فيها رموز SVG مبنية باش تبان فالواجهة (innerHTML).
     // alert() وإشعارات المتصفح (Notification) ماكيقدروش يعرضو HTML، فكيبان الكود خام.
     // هاد الدالة كتمسح أي وسم HTML/SVG قبل ما النص يوصل لهادشي.
+    // حالة فارغة موحدة الشكل لكل القوائم (أيقونة + رسالة + تلميح)
+    function emptyStateHTML(iconSvg, msgAr, msgFr, hintAr, hintFr) {
+      const msg = currentLang === 'ar' ? msgAr : msgFr;
+      const hint = currentLang === 'ar' ? hintAr : hintFr;
+      return `<div class="empty-state">
+        <div class="empty-state-icon">${iconSvg}</div>
+        <div class="empty-state-msg">${msg}</div>
+        ${hint ? `<div class="empty-state-hint">${hint}</div>` : ''}
+      </div>`;
+    }
+
     function stripTags(str) {
       return String(str == null ? '' : str).replace(/<[^>]*>/g, '').replace(/\s{2,}/g, ' ').trim();
     }
