@@ -100,7 +100,7 @@
         list.innerHTML = emptyStateHTML(
           '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
           'المخزن فارغ حاليا', 'Le stock est vide',
-          'دوس على "إضافة" باش تزيد أول قطعة', 'Appuyez sur "Ajouter" pour créer le premier article'
+          'عمر الفورم لفوق ودوس على "+ إضافة للمخزن" باش تزيد أول قطعة', 'Remplissez le formulaire ci-dessus et appuyez sur "+ Ajouter au stock" pour créer le premier article'
         );
       } else {
         list.innerHTML = sortWithPendingLast(globalData.stock).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="stock-item-${d.id}">
@@ -131,7 +131,7 @@
         list.innerHTML = emptyStateHTML(
           '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.4 17.6 3 21m2-13 3 3m10.6 8.6L21 21m-6.3-9.7 5.6-5.6a4.2 4.2 0 0 1-5.5 5.5l-6.9 6.9a1.5 1.5 0 0 1-2.1-2.1l6.9-6.9a4.2 4.2 0 0 1 5.5-5.5l-3.6 3.6z"/></svg>',
           'لا توجد مواعيد بعد', 'Aucun rendez-vous pour le moment',
-          'دوس على "إضافة" باش تزيد أول موعد', 'Appuyez sur "Ajouter" pour créer le premier'
+          'عمر الفورم لفوق ودوس على "+ تسجيل الخدمة" باش تزيد أول موعد', 'Remplissez le formulaire ci-dessus et appuyez sur "+ Enregistrer le service" pour créer le premier'
         );
       } else {
         list.innerHTML = sortWithPendingLast(globalData.installations).map(d => {
@@ -170,7 +170,7 @@
         list.innerHTML = emptyStateHTML(
           '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="14" height="18" rx="1.4"/><line x1="7" y1="8" x2="14" y2="8"/><line x1="7" y1="12" x2="11.5" y2="12"/></svg>',
           'لا توجد ملاحظات بعد', 'Aucune note pour le moment',
-          'دوس على "إضافة" باش تزيد أول ملاحظة', 'Appuyez sur "Ajouter" pour créer la première'
+          'عمر الفورم لفوق ودوس على "+ حفظ الملاحظة" باش تزيد أول ملاحظة', 'Remplissez le formulaire ci-dessus et appuyez sur "+ Enregistrer la note" pour créer la première'
         );
       } else {
         list.innerHTML = sortWithPendingLast(globalData.notes).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="notes-item-${d.id}">
