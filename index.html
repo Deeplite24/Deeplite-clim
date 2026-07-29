@@ -120,12 +120,12 @@
   <!-- 📱<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 5h16v10.5H10.5L6 19v-3.5H4z"/></svg> Device Chat Profile Modal (اسم وأفتار خاص بهذا الجهاز فقط، حتى ولو الحساب مشترك) -->
   <div id="device-profile-modal" class="auth-error-overlay">
     <div class="auth-error-box">
-      <h3 class="modal-title-text" style="font-size:17px; margin-bottom:6px;" id="device-profile-title">من كيدير بهاد الجهاز؟ / Qui utilise cet appareil ?</h3>
-      <p style="font-size:12px; color:#94a3b8; margin-bottom:14px;" id="device-profile-sub">هاد المعلومات غادي تبان فقط فالدردشة باش نعرفو شكون كتب شنو، حتى ولو كلشي داخل بنفس الحساب.</p>
+      <h3 class="modal-title-text" style="font-size:17px; margin-bottom:6px;" id="device-profile-title">من يستخدم هذا الجهاز؟ / Qui utilise cet appareil ?</h3>
+      <p style="font-size:12px; color:#94a3b8; margin-bottom:14px;" id="device-profile-sub">ستظهر هذه المعلومات فقط في الدردشة لمعرفة من كتب ماذا، حتى لو دخل الجميع بنفس الحساب.</p>
       <input type="text" id="device-profile-firstname" class="auth-input" placeholder="الاسم" style="margin-bottom:10px;">
       <input type="text" id="device-profile-lastname" class="auth-input" placeholder="اللقب" style="margin-bottom:10px;">
-      <input type="tel" id="device-profile-phone" class="auth-input" placeholder="رقم الهاتف (اختياري، باش يقدرو أعضاء الفريق يتصلو بيك)" style="margin-bottom:10px;">
-      <input type="email" id="device-profile-email" class="auth-input" placeholder="الإيميل الشخصي (اختياري، باش يقدر المسؤول يزيدك كعامل)" style="margin-bottom:16px;">
+      <input type="tel" id="device-profile-phone" class="auth-input" placeholder="رقم الهاتف (اختياري، ليتمكن أعضاء الفريق من الاتصال بك)" style="margin-bottom:10px;">
+      <input type="email" id="device-profile-email" class="auth-input" placeholder="البريد الإلكتروني الشخصي (اختياري، ليتمكن المسؤول من إضافتك كعامل)" style="margin-bottom:16px;">
       <div style="text-align:right; margin-bottom:8px;">
         <label style="font-size:13px; color:#94a3b8;" id="device-profile-avatar-lbl">اختر أفاتار (اختياري):</label>
       </div>
@@ -607,7 +607,7 @@
         </div>
         <div class="card">
           <h2 id="set-notif-mode-t"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 3h6M4.5 6l1.5-1.5M19.5 6 18 4.5"/></svg> نمط التنبيهات</h2>
-          <p style="font-size: 13px; color: #94a3b8; margin-bottom: 16px; text-align: center;" id="set-notif-mode-desc">اختر الطريقة اللي بغيتي بيها توصلك التنبيهات على حساب اللي كيناسبك.</p>
+          <p style="font-size: 13px; color: #94a3b8; margin-bottom: 16px; text-align: center;" id="set-notif-mode-desc">اختر الطريقة التي تريد أن تصلك بها التنبيهات، حسب ما يناسبك.</p>
           <div class="form-group">
             <select id="notif-mode-select" onchange="onNotifModeChange()">
               <option value="persistent" id="notif-mode-opt-persistent">تذكير دائم يعرض جميع التنبيهات المعلقة</option>

@@ -104,7 +104,7 @@
       }
       const other = teamMembersCache.find(x => x.id === otherId);
       if (isMemberBlocked(other)) {
-        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> هاد العضو محظور، فك الحظر عليه من "العمال" باش تقدر تهضر معاه.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Ce membre est bloqué, débloquez-le depuis "Employés" pour lui écrire.');
+        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> هذا العضو محظور، قم بإلغاء حظره من "العمال" لتتمكن من مراسلته.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Ce membre est bloqué, débloquez-le depuis "Employés" pour lui écrire.');
         return;
       }
       currentPrivateChatWith = otherId;
@@ -290,7 +290,7 @@
       const myself = teamMembersCache.find(x => x.id === myId);
       const other = teamMembersCache.find(x => x.id === otherId);
       if (isMemberBlocked(myself) || isMemberBlocked(other)) {
-        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> هاد المحادثة محظورة، ماتقدرش تصيفط رسائل.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cette conversation est bloquée, envoi impossible.');
+        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> هذه المحادثة محظورة، لا يمكنك إرسال رسائل.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cette conversation est bloquée, envoi impossible.');
         return;
       }
       const key = privateChatKey(myId, otherId);
@@ -430,11 +430,11 @@
       const raw = (input.value || '').trim();
       if (!raw) return;
       const p = getDeviceProfile();
-      if (!p || !p.code) { alert(currentLang === 'ar' ? 'كمّل الملف الشخصي ديال الجهاز أولاً!\nComplétez d\'abord le profil de l\'appareil !' : 'Complétez d\'abord le profil de l\'appareil !\nكمّل الملف الشخصي ديال الجهاز أولاً!'); return; }
+      if (!p || !p.code) { alert(currentLang === 'ar' ? 'أكمل الملف الشخصي للجهاز أولاً!\nComplétez d\'abord le profil de l\'appareil !' : 'Complétez d\'abord le profil de l\'appareil !\nأكمل الملف الشخصي للجهاز أولاً!'); return; }
       const resolveCode = (cb) => {
         if (raw.includes('@')) {
           db.collection('emailDirectory').doc(raw.toLowerCase()).get().then(doc => {
-            if (!doc.exists || !doc.data().code) { alert(currentLang === 'ar' ? 'ماكاينش عامل بهاد الإيميل، تأكد منو أو استعمل اسم المستخدم ديالو!\nAucun employé avec cet e-mail, vérifiez-le ou utilisez son nom d\'utilisateur !' : 'Aucun employé avec cet e-mail, vérifiez-le ou utilisez son nom d\'utilisateur !\nماكاينش عامل بهاد الإيميل، تأكد منو أو استعمل اسم المستخدم ديالو!'); return; }
+            if (!doc.exists || !doc.data().code) { alert(currentLang === 'ar' ? 'لا يوجد عامل بهذا البريد الإلكتروني، تأكد منه أو استخدم اسم مستخدمه!\nAucun employé avec cet e-mail, vérifiez-le ou utilisez son nom d\'utilisateur !' : 'Aucun employé avec cet e-mail, vérifiez-le ou utilisez son nom d\'utilisateur !\nلا يوجد عامل بهذا البريد الإلكتروني، تأكد منه أو استخدم اسم مستخدمه!'); return; }
             cb(doc.data().code);
           }).catch(() => {});
         } else {
@@ -442,9 +442,9 @@
         }
       };
       resolveCode((code) => {
-        if (code === p.code) { alert(currentLang === 'ar' ? 'ماتقدرش تزيد راسك كعامل!\nVous ne pouvez pas vous ajouter vous-même !' : 'Vous ne pouvez pas vous ajouter vous-même !\nماتقدرش تزيد راسك كعامل!'); return; }
+        if (code === p.code) { alert(currentLang === 'ar' ? 'لا يمكنك إضافة نفسك كعامل!\nVous ne pouvez pas vous ajouter vous-même !' : 'Vous ne pouvez pas vous ajouter vous-même !\nلا يمكنك إضافة نفسك كعامل!'); return; }
         db.collection('codeDirectory').doc(code).get().then(doc => {
-          if (!doc.exists) { alert(currentLang === 'ar' ? 'ماكاينش عامل بهاد المعلومات، تأكد منها!\nAucun employé trouvé avec ces informations, vérifiez-les !' : 'Aucun employé trouvé avec ces informations, vérifiez-les !\nماكاينش عامل بهاد المعلومات، تأكد منها!'); return; }
+          if (!doc.exists) { alert(currentLang === 'ar' ? 'لا يوجد عامل بهذه المعلومات، تأكد منها!\nAucun employé trouvé avec ces informations, vérifiez-les !' : 'Aucun employé trouvé avec ces informations, vérifiez-les !\nلا يوجد عامل بهذه المعلومات، تأكد منها!'); return; }
           const target = doc.data();
           const chatKey = [p.code, code].sort().join('__');
           db.collection('externalChats').doc(chatKey).get().then(chatDoc => {
@@ -456,7 +456,7 @@
               createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
               input.value = '';
-              alert(currentLang === 'ar' ? 'تصيفطات الدعوة للعامل! خاصها توافق باش يتزاد لفريقك.\nInvitation envoyée à l\'employé ! Il doit l\'accepter pour rejoindre votre équipe.' : 'Invitation envoyée à l\'employé ! Il doit l\'accepter pour rejoindre votre équipe.\nتصيفطات الدعوة للعامل! خاصها توافق باش يتزاد لفريقك.');
+              alert(currentLang === 'ar' ? 'تم إرسال الدعوة إلى العامل! يجب أن يوافق عليها لينضم إلى فريقك.\nInvitation envoyée à l\'employé ! Il doit l\'accepter pour rejoindre votre équipe.' : 'Invitation envoyée à l\'employé ! Il doit l\'accepter pour rejoindre votre équipe.\nتم إرسال الدعوة إلى العامل! يجب أن يوافق عليها لينضم إلى فريقك.');
             });
           });
         });
@@ -594,7 +594,7 @@
     function toggleExternalChatBlock(chatKey, myCode) {
       const chat = externalChatsCache.find(x => x.id === chatKey);
       const currentlyBlocked = isExternalChatBlocked(chat, myCode);
-      if (!currentlyBlocked && !confirm(currentLang === 'ar' ? 'واش متأكد بغيتي تحظر هاد العامل؟ ماغاديش يقدر يصيفط ليك رسائل.' : 'Confirmer le blocage de cet employé ? Il ne pourra plus vous envoyer de messages.')) return;
+      if (!currentlyBlocked && !confirm(currentLang === 'ar' ? 'هل أنت متأكد أنك تريد حظر هذا العامل؟ لن يتمكن من إرسال رسائل إليك.' : 'Confirmer le blocage de cet employé ? Il ne pourra plus vous envoyer de messages.')) return;
       const update = {};
       update['blockedBy.' + myCode] = !currentlyBlocked;
       db.collection('externalChats').doc(chatKey).set(update, { merge: true }).catch(() => {});
@@ -609,7 +609,7 @@
       if (!p || !p.code) return;
       const chat = externalChatsCache.find(x => x.id === currentExternalChatKey);
       if (isExternalChatBlocked(chat, p.code) || isExternalChatBlocked(chat, currentExternalChatWith)) {
-        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> هاد المحادثة محظورة، ماتقدرش تصيفط رسائل.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cette conversation est bloquée, envoi impossible.');
+        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> هذه المحادثة محظورة، لا يمكنك إرسال رسائل.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cette conversation est bloquée, envoi impossible.');
         return;
       }
       const msg = { text, senderCode: p.code, senderName: deviceDisplayName(p), senderAvatar: p.avatar || '', senderAvatarIsPhoto: !!p.avatarIsPhoto, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
