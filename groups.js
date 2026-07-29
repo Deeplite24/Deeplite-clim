@@ -66,7 +66,11 @@
       if (!box) return;
       const groups = myVisibleGroups();
       if (!groups.length) {
-        box.innerHTML = `<div class="chat-empty">${currentLang === 'ar' ? 'لا توجد أي مجموعة حتى الآن، أنشئ مجموعة جديدة أو انضم برمز!' : 'Aucun groupe pour le moment, créez-en un ou rejoignez avec un code !'}</div>`;
+        box.innerHTML = emptyStateHTML(
+          '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.6"/><path d="M3 19c.7-3 3-4.8 5.7-4.8S13.8 16 14.5 19"/><path d="M14.9 14.5c2.1.4 3.6 1.9 4.1 4.4"/></svg>',
+          'لا توجد أي مجموعة حتى الآن', 'Aucun groupe pour le moment',
+          'أنشئ مجموعة جديدة أو انضم برمز', 'Créez-en un ou rejoignez avec un code'
+        );
         return;
       }
       box.innerHTML = groups.slice().sort((a, b) => (b.lastMessageAt || '').localeCompare(a.lastMessageAt || '')).map(g => {
