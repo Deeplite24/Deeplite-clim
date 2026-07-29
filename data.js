@@ -69,7 +69,7 @@
         list.innerHTML = emptyStateHTML(
           '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.2"/><line x1="2" y1="9.5" x2="22" y2="9.5"/></svg>',
           'لا توجد شيكات بعد', 'Aucun chèque pour le moment',
-          'دوس على "إضافة" باش تزيد أول شيك', 'Appuyez sur "Ajouter" pour créer le premier'
+          'عمر الفورم لفوق ودوس على "+ تسجيل الشيك" باش تزيد أول شيك', 'Remplissez le formulaire ci-dessus et appuyez sur "+ Enregistrer le chèque" pour créer le premier'
         );
       } else {
         list.innerHTML = sortWithPendingLast(globalData.cheques).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="cheques-item-${d.id}">

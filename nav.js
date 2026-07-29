@@ -8,13 +8,27 @@
       settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.9 7.9 0 0 0 0-3l2-1.6-2-3.4-2.4.7a7.7 7.7 0 0 0-2.6-1.5L14 2h-4l-.4 2.7a7.7 7.7 0 0 0-2.6 1.5l-2.4-.7-2 3.4 2 1.6a7.9 7.9 0 0 0 0 3l-2 1.6 2 3.4 2.4-.7a7.7 7.7 0 0 0 2.6 1.5L10 22h4l.4-2.7a7.7 7.7 0 0 0 2.6-1.5l2.4.7 2-3.4z"/>',
       employees: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7"/>',
       groups: '<circle cx="9" cy="8" r="3"/><circle cx="16" cy="9.4" r="2.6"/><path d="M3.5 20c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5"/><path d="M14.2 15.3c2 .3 3.5 1.9 4.1 4.2"/>',
-      home: '<path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9.5a1 1 0 0 0 1 1h3.2v-5.8h3.6v5.8H17a1 1 0 0 0 1-1V10"/>'
+      home: '<path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9.5a1 1 0 0 0 1 1h3.2v-5.8h3.6v5.8H17a1 1 0 0 0 1-1V10"/>',
+      addcheque: '<rect x="2" y="6" width="14" height="11" rx="2"/><line x1="2" y1="10" x2="16" y2="10"/><circle cx="18.3" cy="15.3" r="4.4"/><line x1="18.3" y1="13.3" x2="18.3" y2="17.3"/><line x1="16.3" y1="15.3" x2="20.3" y2="15.3"/>'
     };
     function svgIcon(name, size) {
       return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ''}</svg>`;
     }
 
+    // كيدير فتح مباشر لفورم تسجيل شيك جديد، وكيمركز فيه الفوكس على أول خانة.
+    // خاصو يبقى معرف قبل availableNavShortcuts باش يكون جاهز ملي كيتقرا onclick.
+    function openChequeAddForm() {
+      openSection('cheques-section');
+      setTimeout(() => {
+        const form = document.getElementById('chk-form-t');
+        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const input = document.getElementById('chk-num');
+        if (input) input.focus();
+      }, 80);
+    }
+
     const availableNavShortcuts = [
+      { id: 'add-cheque', icon: 'addcheque', labelAr: 'تسجيل شيك', labelFr: 'Enregistrer un chèque', onclick: "openChequeAddForm()" },
       { id: 'cheques', icon: 'cheques', labelAr: 'الشيكات', labelFr: 'Chèques', onclick: "openSection('cheques-section')" },
       { id: 'stock', icon: 'stock', labelAr: 'المخزن', labelFr: 'Stock', onclick: "openSection('stock-section')" },
       { id: 'install', icon: 'install', labelAr: 'الخدمات', labelFr: 'Services', onclick: "openSection('install-section')" },
