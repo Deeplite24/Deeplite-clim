@@ -303,6 +303,28 @@
         <div class="shortcut-add-row">
           <button class="section-shortcut-add-btn" id="shortcut-add-btn-home" onclick="openShortcutPicker()">+ إضافة قائمة رئيسية</button>
         </div>
+        <div class="stats-row" id="home-stats-row">
+          <div class="stat-card" onclick="openSection('cheques-section')" style="cursor:pointer;">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.2"/><line x1="2" y1="9.5" x2="22" y2="9.5"/></svg></div>
+            <div class="stat-value" id="stat-cheques-out">0 DH</div>
+            <div class="stat-label" id="stat-cheques-out-lbl">شيكات صادرة</div>
+          </div>
+          <div class="stat-card" onclick="openSection('cheques-section')" style="cursor:pointer;">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.2"/><line x1="2" y1="9.5" x2="22" y2="9.5"/></svg></div>
+            <div class="stat-value" id="stat-cheques-in">0 DH</div>
+            <div class="stat-label" id="stat-cheques-in-lbl">شيكات واردة</div>
+          </div>
+          <div class="stat-card" onclick="openSection('stock-section')" style="cursor:pointer;">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5"/><path d="M12 12v10"/></svg></div>
+            <div class="stat-value" id="stat-stock-value">0 DH</div>
+            <div class="stat-label" id="stat-stock-value-lbl">قيمة المخزون</div>
+          </div>
+          <div class="stat-card stat-clickable stat-warning" id="stat-low-stock-card" onclick="openSection('stock-section')" style="display:none;">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="17" r="0.7" fill="currentColor" stroke="none"/></svg></div>
+            <div class="stat-value" id="stat-low-stock-count">0</div>
+            <div class="stat-label" id="stat-low-stock-lbl">قطع منخفضة المخزون</div>
+          </div>
+        </div>
         <div class="grid-menu" id="home-grid-menu">
           <div class="menu-card" onclick="openSection('cheques-section')">
             <div class="menu-badge" id="badge-cheques">0</div>
@@ -389,6 +411,8 @@
           </div>
 
           <div class="form-group"><input type="number" id="item-qty" placeholder="الكمية"></div>
+
+          <div class="form-group"><input type="number" id="item-minqty" placeholder="الحد الأدنى للتنبيه (اختياري)"></div>
           
           <div class="form-group">
             <input type="number" id="item-price" placeholder="الثمن الواحد (DH)" oninput="filterPriceSuggestions(this.value)" autocomplete="off">

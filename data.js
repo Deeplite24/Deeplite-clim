@@ -57,6 +57,41 @@
     // (quand on change la langue), donc le bouton "مسح/Supprimer" se traduit
     // maintenant immédiatement au changement de langue, sans attendre une
     // modification des données.
+    function renderHomeStats() {
+      const outEl = document.getElementById('stat-cheques-out');
+      if (!outEl) return; // الصفحة الرئيسية ماشي مفتوحة بعد فالـ DOM
+
+      let outTotal = 0, inTotal = 0;
+      globalData.cheques.forEach(c => {
+        const amt = Number(c.amount) || 0;
+        if (c.type === 'شيك صادر') outTotal += amt;
+        else if (c.type === 'شيك وارد') inTotal += amt;
+      });
+      document.getElementById('stat-cheques-out').textContent = outTotal.toLocaleString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR') + ' DH';
+      document.getElementById('stat-cheques-in').textContent = inTotal.toLocaleString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR') + ' DH';
+
+      let stockValue = 0, lowCount = 0;
+      globalData.stock.forEach(s => {
+        stockValue += (Number(s.qty) || 0) * (Number(s.price) || 0);
+        if (s.minQty && Number(s.qty) <= Number(s.minQty)) lowCount++;
+      });
+      document.getElementById('stat-stock-value').textContent = stockValue.toLocaleString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR') + ' DH';
+
+      const lowCard = document.getElementById('stat-low-stock-card');
+      document.getElementById('stat-low-stock-count').textContent = lowCount;
+      lowCard.style.display = lowCount > 0 ? '' : 'none';
+
+      const labels = {
+        ar: { out: 'شيكات صادرة', in: 'شيكات واردة', stock: 'قيمة المخزون', low: 'قطعة منخفضة المخزون' },
+        fr: { out: 'Chèques émis', in: 'Chèques reçus', stock: 'Valeur du stock', low: 'Articles en stock bas' }
+      };
+      const l = labels[currentLang] || labels.ar;
+      document.getElementById('stat-cheques-out-lbl').textContent = l.out;
+      document.getElementById('stat-cheques-in-lbl').textContent = l.in;
+      document.getElementById('stat-stock-value-lbl').textContent = l.stock;
+      document.getElementById('stat-low-stock-lbl').textContent = l.low;
+    }
+
     function renderChequesListUI() {
       const t = translations[currentLang];
       const list = document.getElementById('cheques-list');
@@ -86,6 +121,7 @@
       showPersistentRemindersNotification();
       applySearchFilter('cheques');
       updateBellNotifications();
+      renderHomeStats();
     }
 
     function renderStockListUI() {
@@ -103,20 +139,25 @@
           'املأ النموذج أعلاه واضغط على "+ إضافة للمخزن" لإضافة أول قطعة', 'Remplissez le formulaire ci-dessus et appuyez sur "+ Ajouter au stock" pour créer le premier article'
         );
       } else {
-        list.innerHTML = sortWithPendingLast(globalData.stock).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="stock-item-${d.id}">
-          <div class="item-header"><span class="item-title">${d.name}</span><span class="item-badge">Qty: ${d.qty} | ${d.price || 0} DH</span></div>
+        list.innerHTML = sortWithPendingLast(globalData.stock).map(d => {
+          const isLow = d.minQty && Number(d.qty) <= Number(d.minQty);
+          const lowBadge = isLow ? `<span class="stock-low-badge">⚠️ ${currentLang === 'ar' ? 'منخفض' : 'Bas'}</span>` : '';
+          return `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="stock-item-${d.id}">
+          <div class="item-header"><span class="item-title">${d.name}${lowBadge}</span><span class="item-badge">Qty: ${d.qty} | ${d.price || 0} DH</span></div>
           <div class="item-sub">${d.date ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 3h6M4.5 6l1.5-1.5M19.5 6 18 4.5"/></svg> ' + d.date.replace('T', ' ') : '-'}</div>
           ${formatCreatedInfo(d)}
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('stock', d)}
           ${renderPendingEditBox('stock', d)}
           <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditStock('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button><button class="btn-delete" onclick="deleteItem('stock', '${d.id}')">${t.delBtn}</button></span></div>
-        </div>`).join('');
+        </div>`;
+        }).join('');
       }
       updateNotificationBoxes();
       showPersistentRemindersNotification();
       applySearchFilter('stock');
       updateBellNotifications();
+      renderHomeStats();
     }
 
     function renderInstallationsListUI() {
@@ -221,6 +262,7 @@
       document.getElementById('item-name').value = item.name;
       document.getElementById('item-qty').value = item.qty;
       document.getElementById('item-price').value = item.price || '';
+      document.getElementById('item-minqty').value = item.minQty || '';
       document.getElementById('item-date').value = item.date || '';
       document.getElementById('stk-btn-add').innerHTML = currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4"/><rect x="8" y="13" width="8" height="6"/></svg> تحديث السلعة' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4"/><rect x="8" y="13" width="8" height="6"/></svg> Mettre à jour';
       document.getElementById('stk-cancel-edit').classList.add('show');
@@ -230,7 +272,7 @@
 
     function cancelEditStock() {
       editingItem.stock = null;
-      document.getElementById('item-name').value = ''; document.getElementById('item-qty').value = ''; document.getElementById('item-price').value = ''; document.getElementById('item-date').value = '';
+      document.getElementById('item-name').value = ''; document.getElementById('item-qty').value = ''; document.getElementById('item-price').value = ''; document.getElementById('item-minqty').value = ''; document.getElementById('item-date').value = '';
       document.getElementById('stk-btn-add').innerHTML = translations[currentLang].stkBtnAdd;
       document.getElementById('stk-cancel-edit').classList.remove('show');
     }
@@ -300,14 +342,15 @@
       const name = document.getElementById('item-name').value.trim();
       const qty = document.getElementById('item-qty').value.trim();
       const price = document.getElementById('item-price').value.trim() || "0";
+      const minQty = document.getElementById('item-minqty').value.trim() || "";
       const date = document.getElementById('item-date').value;
       if (!name || !qty) { alert(currentLang === 'ar' ? "المرجو إدخال اسم القطعة والكمية!\nVeuillez entrer le nom et la quantité !" : "Veuillez entrer le nom et la quantité !\nالمرجو إدخال اسم القطعة والكمية!"); return; }
       if (editingItem.stock) {
-        submitPendingEdit('stock', editingItem.stock, { name, qty, price, date });
+        submitPendingEdit('stock', editingItem.stock, { name, qty, price, minQty, date });
         cancelEditStock();
       } else {
-        db.collection('users').doc(currentUid).collection('stock').add({ name, qty, price, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
-          document.getElementById('item-name').value = ''; document.getElementById('item-qty').value = ''; document.getElementById('item-price').value = ''; document.getElementById('item-date').value = '';
+        db.collection('users').doc(currentUid).collection('stock').add({ name, qty, price, minQty, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
+          document.getElementById('item-name').value = ''; document.getElementById('item-qty').value = ''; document.getElementById('item-price').value = ''; document.getElementById('item-minqty').value = ''; document.getElementById('item-date').value = '';
         }).catch(showSaveError);
       }
     }

@@ -940,7 +940,7 @@
 
     const previousValueFieldLabels = {
       cheques: { num: { ar: 'رقم الشيك', fr: 'N° chèque' }, owner: { ar: 'الصاحب', fr: 'Propriétaire' }, amount: { ar: 'المبلغ', fr: 'Montant' }, type: { ar: 'النوع', fr: 'Type' }, date: { ar: 'التاريخ', fr: 'Date' } },
-      stock: { name: { ar: 'الاسم', fr: 'Nom' }, qty: { ar: 'الكمية', fr: 'Quantité' }, price: { ar: 'الثمن', fr: 'Prix' }, date: { ar: 'التاريخ', fr: 'Date' } },
+      stock: { name: { ar: 'الاسم', fr: 'Nom' }, qty: { ar: 'الكمية', fr: 'Quantité' }, price: { ar: 'الثمن', fr: 'Prix' }, minQty: { ar: 'الحد الأدنى', fr: 'Seuil minimum' }, date: { ar: 'التاريخ', fr: 'Date' } },
       installations: { client: { ar: 'الزبون', fr: 'Client' }, phone: { ar: 'الهاتف', fr: 'Téléphone' }, map: { ar: 'الموقع', fr: 'Position' }, clim: { ar: 'التفاصيل', fr: 'Détails' }, service: { ar: 'الخدمة', fr: 'Service' }, date: { ar: 'التاريخ', fr: 'Date' } },
       notes: { text: { ar: 'النص', fr: 'Texte' }, datetime: { ar: 'التاريخ', fr: 'Date' } }
     };
