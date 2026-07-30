@@ -41,16 +41,18 @@
       const infoDocRef = db.collection('companies').doc(companyId);
 
       // مؤقتا: كل كتابة وحدها بلا batch باش نعرفو بالضبط فين واقعة رفضة الصلاحية
-      infoDocRef.collection('info').doc('data').set({
-        name,
-        createdBy: currentUid,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      // ملاحظة: access خاصو يتخلق قبل info، حيت الـRule ديال access كتتحقق
+      // "!exists(info/data)" — إلا خلقنا info قبل، هاد الشرط غادي يفشل دايما
+      infoDocRef.collection('access').doc(currentUid).set({
+        role: 'admin',
+        name: currentUserLabel(),
+        addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        blocked: false
       }).then(() => {
-        return infoDocRef.collection('access').doc(currentUid).set({
-          role: 'admin',
-          name: currentUserLabel(),
-          addedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          blocked: false
+        return infoDocRef.collection('info').doc('data').set({
+          name,
+          createdBy: currentUid,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         }).catch(err => { throw { step: 2, err }; });
       }, err => { throw { step: 1, err }; }).then(() => {
         return db.collection('users').doc(currentUid).collection('profile').doc('info')
