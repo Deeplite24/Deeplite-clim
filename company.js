@@ -38,26 +38,25 @@
       if (!currentUid) return;
 
       const companyId = 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
-      const batch = db.batch();
-
-      // ملاحظة: خاص المسار يكون بالضبط companies/{companyId}/info/data باش يتوافق مع Firestore Rules
       const infoDocRef = db.collection('companies').doc(companyId);
-      batch.set(infoDocRef.collection('info').doc('data'), {
+
+      // مؤقتا: كل كتابة وحدها بلا batch باش نعرفو بالضبط فين واقعة رفضة الصلاحية
+      infoDocRef.collection('info').doc('data').set({
         name,
         createdBy: currentUid,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      const accessRef = infoDocRef.collection('access').doc(currentUid);
-      batch.set(accessRef, {
-        role: 'admin',
-        name: currentUserLabel(),
-        addedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        blocked: false
-      });
-      const profileRef = db.collection('users').doc(currentUid).collection('profile').doc('info');
-      batch.set(profileRef, { companyId }, { merge: true });
-
-      batch.commit().then(() => {
+      }).then(() => {
+        return infoDocRef.collection('access').doc(currentUid).set({
+          role: 'admin',
+          name: currentUserLabel(),
+          addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          blocked: false
+        }).catch(err => { throw { step: 2, err }; });
+      }, err => { throw { step: 1, err }; }).then(() => {
+        return db.collection('users').doc(currentUid).collection('profile').doc('info')
+          .set({ companyId }, { merge: true })
+          .catch(err => { throw { step: 3, err }; });
+      }).then(() => {
         currentCompanyId = companyId;
         currentUserRole = 'admin';
         currentUserProfile = Object.assign({}, currentUserProfile, { companyId });
@@ -71,9 +70,11 @@
         upsertMember();
         initExternalFeatures();
         if (typeof toggleAdminInviteButton === 'function') toggleAdminInviteButton();
-      }).catch(err => {
-        console.error('createCompany error:', err);
-        alert('DEBUG: ' + (err.code || '') + ' — ' + (err.message || err));
+      }).catch(wrapped => {
+        const step = wrapped && wrapped.step;
+        const err = (wrapped && wrapped.err) || wrapped;
+        console.error('createCompany error at step', step, err);
+        alert('DEBUG step ' + step + ': ' + (err.code || '') + ' — ' + (err.message || err));
       });
     }
 
