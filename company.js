@@ -73,7 +73,7 @@
         if (typeof toggleAdminInviteButton === 'function') toggleAdminInviteButton();
       }).catch(err => {
         console.error('createCompany error:', err);
-        alert(currentLang === 'ar' ? 'وقع خطأ فخلق الشركة، حاول من جديد.' : "Une erreur s'est produite lors de la création de la société, réessayez.");
+        alert('DEBUG: ' + (err.code || '') + ' — ' + (err.message || err));
       });
     }
 
@@ -128,11 +128,11 @@
           initExternalFeatures();
         }).catch(err => {
           console.error('joinCompany error:', err);
-          alert(currentLang === 'ar' ? 'وقع خطأ فالانضمام، تحقق من الكود وحاول من جديد.' : "Une erreur s'est produite, vérifiez le code et réessayez.");
+          alert('DEBUG: ' + (err.code || '') + ' — ' + (err.message || err));
         });
       }).catch(err => {
         console.error('joinCompany read error:', err);
-        alert(currentLang === 'ar' ? 'وقع خطأ، حاول من جديد.' : "Une erreur s'est produite, réessayez.");
+        alert('DEBUG: ' + (err.code || '') + ' — ' + (err.message || err));
       });
     }
 
