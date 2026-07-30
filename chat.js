@@ -134,9 +134,9 @@
     function memberIsAdmin(m) { return !m || m.role !== 'member'; }
 
     function isCurrentUserAdmin() {
-      const myId = getDeviceId();
-      const me = teamMembersCache.find(x => x.id === myId);
-      return memberIsAdmin(me);
+      // ⚠️ دابا الدور الحقيقي جاي من companies/{companyId}/access/{uid} (currentUserRole)،
+      // ماشي من نظام "الجهاز" القديم (teamMembersCache) اللي كان بديل مؤقت من قبل
+      return currentUserRole === 'admin';
     }
 
     function countAdmins() {
@@ -893,7 +893,7 @@
     }
 
     function submitPendingEdit(col, id, data) {
-      if (!currentUid) return;
+      if (!currentCompanyId) return;
       const myId = getDeviceId();
       const p = getDeviceProfile();
       const name = p ? deviceDisplayName(p) : currentUserLabel();
@@ -910,16 +910,16 @@
           updatedBy: name,
           pendingEdit: firebase.firestore.FieldValue.delete()
         });
-        db.collection('users').doc(currentUid).collection(col).doc(id).update(updates).catch(showSaveError);
+        db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update(updates).catch(showSaveError);
       } else {
-        db.collection('users').doc(currentUid).collection(col).doc(id).update({
+        db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update({
           pendingEdit: { data, proposedBy: myId, proposedByName: name, proposedAt: new Date().toISOString() }
         }).catch(showSaveError);
       }
     }
 
     function approveEdit(col, id) {
-      if (!currentUid) return;
+      if (!currentCompanyId) return;
       const item = (globalData[col] || []).find(x => x.id === id);
       if (!item || !item.pendingEdit) return;
       if (!canActOnPendingEdit(item)) return;
@@ -931,16 +931,16 @@
         updatedBy: item.pendingEdit.proposedByName,
         pendingEdit: firebase.firestore.FieldValue.delete()
       });
-      db.collection('users').doc(currentUid).collection(col).doc(id).update(updates);
+      db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update(updates);
     }
 
     function rejectEdit(col, id) {
-      if (!currentUid) return;
+      if (!currentCompanyId) return;
       const item = (globalData[col] || []).find(x => x.id === id);
       if (!item || !item.pendingEdit) return;
       if (!canActOnPendingEdit(item)) return;
       if (!confirm(translations[currentLang].confirmReject)) return;
-      db.collection('users').doc(currentUid).collection(col).doc(id).update({ pendingEdit: firebase.firestore.FieldValue.delete() });
+      db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update({ pendingEdit: firebase.firestore.FieldValue.delete() });
     }
 
     function renderPendingEditBox(col, d) {

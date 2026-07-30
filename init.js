@@ -26,7 +26,7 @@
           document.getElementById('app-content').style.display = 'block';
           // TODO (الخطوة الجاية): loadUserData وباقي الـlisteners خاصهم يتبدلو
           // باش يقراو من companies/{currentCompanyId}/... عوض users/{currentUid}/...
-          loadUserData(currentUid);
+          loadUserData(currentCompanyId);
           renderAccountSwitcher();
           ensureDeviceProfile();
           startGroupsListeners();

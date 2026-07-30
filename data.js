@@ -1,7 +1,9 @@
-    function loadUserData(uid) {
+    // ⚠️ الپارامتر دابا هو companyId (ماشي uid) — البيانات (شيكات، ستوك، انستالاسيون، ملاحظات)
+    // ولات مشتركة بين جميع أعضاء نفس الشركة، عوض ما كانت معزولة لكل حساب Firebase وحدو
+    function loadUserData(companyId) {
       dataLoading = { cheques: true, stock: true, installations: true, notes: true };
       renderNavShortcuts();
-      db.collection('users').doc(uid).collection('cheques').onSnapshot(snapshot => {
+      db.collection('companies').doc(companyId).collection('cheques').onSnapshot(snapshot => {
         dataLoading.cheques = false;
         if (snapshot.empty) {
           globalData.cheques = [];
@@ -13,7 +15,7 @@
         renderChequesListUI();
       });
 
-      db.collection('users').doc(uid).collection('stock').onSnapshot(snapshot => {
+      db.collection('companies').doc(companyId).collection('stock').onSnapshot(snapshot => {
         dataLoading.stock = false;
         if (snapshot.empty) {
           globalData.stock = [];
@@ -25,7 +27,7 @@
         renderStockListUI();
       });
 
-      db.collection('users').doc(uid).collection('installations').onSnapshot(snapshot => {
+      db.collection('companies').doc(companyId).collection('installations').onSnapshot(snapshot => {
         dataLoading.installations = false;
         if (snapshot.empty) {
           globalData.installations = [];
@@ -37,7 +39,7 @@
         renderInstallationsListUI();
       });
 
-      db.collection('users').doc(uid).collection('notes').onSnapshot(snapshot => {
+      db.collection('companies').doc(companyId).collection('notes').onSnapshot(snapshot => {
         dataLoading.notes = false;
         if (snapshot.empty) {
           globalData.notes = [];
@@ -331,7 +333,7 @@
         submitPendingEdit('cheques', editingItem.cheques, { num, owner, amount, type, date });
         cancelEditCheque();
       } else {
-        db.collection('users').doc(currentUid).collection('cheques').add({ num, owner, amount, type, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
+        db.collection('companies').doc(currentCompanyId).collection('cheques').add({ num, owner, amount, type, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
           document.getElementById('chk-num').value = ''; document.getElementById('chk-owner').value = ''; document.getElementById('chk-amount').value = ''; document.getElementById('chk-type').selectedIndex = 0; document.getElementById('chk-date').value = '';
         }).catch(showSaveError);
       }
@@ -349,7 +351,7 @@
         submitPendingEdit('stock', editingItem.stock, { name, qty, price, minQty, date });
         cancelEditStock();
       } else {
-        db.collection('users').doc(currentUid).collection('stock').add({ name, qty, price, minQty, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
+        db.collection('companies').doc(currentCompanyId).collection('stock').add({ name, qty, price, minQty, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
           document.getElementById('item-name').value = ''; document.getElementById('item-qty').value = ''; document.getElementById('item-price').value = ''; document.getElementById('item-minqty').value = ''; document.getElementById('item-date').value = '';
         }).catch(showSaveError);
       }
@@ -368,7 +370,7 @@
         submitPendingEdit('installations', editingItem.installations, { client, phone, map, clim, service, date });
         cancelEditInstallation();
       } else {
-        db.collection('users').doc(currentUid).collection('installations').add({ client, phone, map, clim, service, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
+        db.collection('companies').doc(currentCompanyId).collection('installations').add({ client, phone, map, clim, service, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
           document.getElementById('client-name').value = ''; document.getElementById('client-phone').value = ''; document.getElementById('client-map').value = ''; document.getElementById('clim-type').value = ''; document.getElementById('service-type').selectedIndex = 0; document.getElementById('install-date').value = '';
         }).catch(showSaveError);
       }
@@ -383,7 +385,7 @@
         submitPendingEdit('notes', editingItem.notes, { text, datetime });
         cancelEditNote();
       } else {
-        db.collection('users').doc(currentUid).collection('notes').add({ text, datetime, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
+        db.collection('companies').doc(currentCompanyId).collection('notes').add({ text, datetime, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
           document.getElementById('note-text').value = ''; document.getElementById('note-datetime').value = '';
         }).catch(showSaveError);
       }
@@ -394,18 +396,18 @@
     }
 
     function deleteItem(col, id) {
-      if (!currentUid) return;
+      if (!currentCompanyId) return;
       if (!isCurrentUserAdmin()) {
         alert(currentLang === 'ar' ? 'الحذف متاح فقط للمسؤول، تواصل معه.' : "La suppression est réservée à l'administrateur, contactez-le.");
         return;
       }
       if (confirm(currentLang === 'ar' ? "هل أنت متأكد من الحذف؟\nÊtes-vous sûr de vouloir supprimer ?" : "Êtes-vous sûr de vouloir supprimer ?\nهل أنت متأكد من الحذف؟")) { 
-        db.collection('users').doc(currentUid).collection(col).doc(id).delete().catch(showSaveError); 
+        db.collection('companies').doc(currentCompanyId).collection(col).doc(id).delete().catch(showSaveError); 
       }
     }
 
     function confirmAndDeleteEverything() {
-      if (!currentUid) return;
+      if (!currentCompanyId) return;
       if (!isCurrentUserAdmin()) {
         alert(currentLang === 'ar' ? 'هذا الإجراء متاح فقط للمسؤول.' : "Cette action est réservée à l'administrateur.");
         return;
@@ -416,7 +418,7 @@
         let confirm2 = prompt(promptMsg);
         if (confirm2 === "مسح" || confirm2 === "supprimer") {
           ['cheques', 'stock', 'installations', 'notes'].forEach(col => {
-            db.collection('users').doc(currentUid).collection(col).get().then(snap => snap.forEach(d => d.ref.delete()));
+            db.collection('companies').doc(currentCompanyId).collection(col).get().then(snap => snap.forEach(d => d.ref.delete()));
           });
           alert(currentLang === 'ar' ? "تم مسح جميع بيانات الحساب بنجاح!\nToutes les données ont été supprimées avec succès !" : "Toutes les données ont été supprimées avec succès !\nتم مسح جميع بيانات الحساب بنجاح!");
           openSection('home-section');

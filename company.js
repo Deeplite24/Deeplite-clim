@@ -63,7 +63,7 @@
         currentUserRole = 'admin';
         currentUserProfile = Object.assign({}, currentUserProfile, { companyId });
         closeCompanySetupScreenAfterSuccess();
-        loadUserData(currentUid);
+        loadUserData(currentCompanyId);
         renderAccountSwitcher();
         ensureDeviceProfile();
         startGroupsListeners();
@@ -119,7 +119,7 @@
           currentUserRole = 'member';
           currentUserProfile = Object.assign({}, currentUserProfile, { companyId });
           closeCompanySetupScreenAfterSuccess();
-          loadUserData(currentUid);
+          loadUserData(currentCompanyId);
           renderAccountSwitcher();
           ensureDeviceProfile();
           startGroupsListeners();
