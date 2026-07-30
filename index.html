@@ -64,6 +64,29 @@
     </div>
   </div>
 
+  <!-- 🏢 Company Setup Section: كتبان ملي المستخدم مسجل الدخول ولكن ماشي مرتبط بأي شركة بعد -->
+  <div id="company-setup-section" style="display:none;">
+    <div class="top-brand-bar">
+      <span style="display:flex;align-items:center;gap:6px"><svg viewBox="0 0 48 48" width="20" height="20" fill="none" stroke="#38bdf8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="24" y1="24" x2="24.0" y2="6.0"/><line x1="24.0" y1="12.8" x2="20.3" y2="7.5"/><line x1="24.0" y1="12.8" x2="27.7" y2="7.5"/><line x1="24" y1="24" x2="39.6" y2="15.0"/><line x1="33.7" y1="18.4" x2="36.4" y2="12.5"/><line x1="33.7" y1="18.4" x2="40.1" y2="19.0"/><line x1="24" y1="24" x2="39.6" y2="33.0"/><line x1="33.7" y1="29.6" x2="40.1" y2="29.0"/><line x1="33.7" y1="29.6" x2="36.4" y2="35.5"/><line x1="24" y1="24" x2="24.0" y2="42.0"/><line x1="24.0" y1="35.2" x2="27.7" y2="40.5"/><line x1="24.0" y1="35.2" x2="20.3" y2="40.5"/><line x1="24" y1="24" x2="8.4" y2="33.0"/><line x1="14.3" y1="29.6" x2="11.6" y2="35.5"/><line x1="14.3" y1="29.6" x2="7.9" y2="29.0"/><line x1="24" y1="24" x2="8.4" y2="15.0"/><line x1="14.3" y1="18.4" x2="7.9" y2="19.0"/><line x1="14.3" y1="18.4" x2="11.6" y2="12.5"/><circle cx="24" cy="24" r="2.3" fill="#38bdf8" stroke="none"/></svg> deeplite clim</span>
+    </div>
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <h2 id="cs-main-title">شركة <span>جديدة</span></h2>
+        <p id="cs-desc">خلق شركة جديدة، أو انضم لشركة كاينة بكود الدعوة اللي عطاك المسؤول ديالها</p>
+
+        <input type="text" id="cs-company-name" class="auth-input" placeholder="اسم الشركة">
+        <button class="btn-login-main" onclick="submitCreateCompany()" id="cs-create-btn">خلق الشركة</button>
+
+        <div style="text-align:center; margin:16px 0; color:#94a3b8; font-size:13px;" id="cs-or-txt">— أو —</div>
+
+        <input type="text" id="cs-join-code" class="auth-input" placeholder="أدخل كود الدعوة" style="text-transform:uppercase;">
+        <button class="btn-register-main" onclick="submitJoinCompany()" id="cs-join-btn">انضمام للشركة</button>
+
+        <div class="switch-mode-text" onclick="handleLogoutFromCompanySetup()" style="margin-top:18px; text-align:center;"><span id="cs-logout-txt">تسجيل الخروج</span></div>
+      </div>
+    </div>
+  </div>
+
   <!-- <svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3 2 20h20z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="17" r="0.7" fill="currentColor" stroke="none"/></svg> Auth Error Modal (نسيت كلمة السر / إنشاء حساب) -->
   <div id="auth-error-modal" class="auth-error-overlay">
     <div class="auth-error-box">
@@ -176,6 +199,19 @@
     </div>
   </div>
 
+  <!-- 🏢 Company Invite Modal (admin غير): توليد كود دعوة لعامل جديد -->
+  <div id="company-invite-modal" class="auth-error-overlay">
+    <div class="auth-error-box">
+      <h3 class="modal-title-text" style="font-size:17px; margin-bottom:14px;" id="ci-title">دعوة عامل جديد</h3>
+      <div style="background:#0f172a; border:1px solid #334155; border-radius:12px; padding:12px; margin-bottom:16px; text-align:center;">
+        <div style="font-size:12px; color:#94a3b8; margin-bottom:4px;" id="ci-code-lbl">كود الدعوة (صالح لاستعمال واحد فقط):</div>
+        <div style="font-size:22px; font-weight:800; letter-spacing:3px; color:#38bdf8; margin-bottom:8px;" id="ci-invite-code">------</div>
+        <button onclick="generateNewInviteCode()" style="background:#334155; color:#fff; border:none; border-radius:10px; padding:6px 12px; font-size:12px; cursor:pointer;" id="ci-regen-btn">كود جديد</button>
+      </div>
+      <span class="btn-error-close" onclick="closeCompanyInviteModal()" id="ci-close-t">✕ إغلاق</span>
+    </div>
+  </div>
+
   <!-- <svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Create Group Modal -->
   <div id="create-group-modal" class="auth-error-overlay">
     <div class="auth-error-box">
@@ -254,6 +290,7 @@
         <button class="btn-logout-top" onclick="logout()" id="logout-btn-txt">خروج</button>
       </div>
       <div class="header-actions">
+        <button class="settings-top-btn" onclick="openCompanyInviteModal()" id="invite-worker-btn" style="display:none;"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c.8-3.4 3.4-5.3 6.5-5.3s5.7 1.9 6.5 5.3"/><path d="M17 8h4M19 6v4"/></svg></button>
         <button class="settings-top-btn" onclick="openSection('settings-section')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.999.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg></button>
         <div class="header-actions-sep"></div>
         <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-toggle-main"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg></button>
@@ -673,6 +710,7 @@
   <script src="ui.js"></script>
   <script src="nav.js"></script>
   <script src="data.js"></script>
+  <script src="company.js"></script>
   <script src="init.js"></script>
 </body>
 </html>

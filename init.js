@@ -14,18 +14,33 @@
       if (user) {
         currentUid = user.uid;
         document.getElementById('auth-section').style.display = 'none';
-        document.getElementById('app-content').style.display = 'block';
-        loadUserData(currentUid);
-        loadUserProfile(currentUid);
-        renderAccountSwitcher();
-        ensureDeviceProfile();
-        startGroupsListeners();
-        startMembersListener(currentUid);
-        startPrivateChatsListener(currentUid);
-        upsertMember();
-        initExternalFeatures();
+        loadUserCompanyContext(currentUid).then(companyId => {
+          if (!companyId) {
+            // المستخدم عندو حساب Firebase صحيح، ولكن ماشي مرتبط بأي شركة بعد
+            // (تسجيل أول مرة، أو الاسم مازال خاصو يتعمر) → نبينو له شاشة خلق/انضمام شركة
+            document.getElementById('app-content').style.display = 'none';
+            if (typeof openCompanySetupScreen === 'function') openCompanySetupScreen();
+            return;
+          }
+          document.getElementById('company-setup-section').style.display = 'none';
+          document.getElementById('app-content').style.display = 'block';
+          // TODO (الخطوة الجاية): loadUserData وباقي الـlisteners خاصهم يتبدلو
+          // باش يقراو من companies/{currentCompanyId}/... عوض users/{currentUid}/...
+          loadUserData(currentUid);
+          renderAccountSwitcher();
+          ensureDeviceProfile();
+          startGroupsListeners();
+          startMembersListener(currentUid);
+          startPrivateChatsListener(currentUid);
+          upsertMember();
+          initExternalFeatures();
+          if (typeof toggleAdminInviteButton === 'function') toggleAdminInviteButton();
+        });
       } else {
         currentUid = null;
+        currentCompanyId = null;
+        currentUserRole = null;
+        document.getElementById('company-setup-section').style.display = 'none';
         if (ownedGroupsUnsub) { ownedGroupsUnsub(); ownedGroupsUnsub = null; }
         if (externalGroupsUnsub) { externalGroupsUnsub(); externalGroupsUnsub = null; }
         if (groupMsgsUnsub) { groupMsgsUnsub(); groupMsgsUnsub = null; }

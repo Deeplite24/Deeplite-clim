@@ -1,0 +1,135 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    // دوال مساعدة
+    // ============================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isMemberOf(companyId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/companies/$(companyId)/access/$(request.auth.uid));
+    }
+
+    function roleIn(companyId) {
+      return get(/databases/$(database)/documents/companies/$(companyId)/access/$(request.auth.uid)).data.role;
+    }
+
+    function isAdminOf(companyId) {
+      return isMemberOf(companyId) && roleIn(companyId) == 'admin';
+    }
+
+    // ============================================================
+    // users/{uid}/profile  →  وثيقة خفيفة كتحتوي غير companyId + الاسم
+    // ============================================================
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+
+      match /profile/{doc} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+    }
+
+    // ============================================================
+    // inviteCodes/{code}  →  collection مستقلة (توب-ليفل) باش العامل
+    // يقدر يتحقق من الكود قبل ما يعرف بأي companyId هو مرتبط
+    // شكل الوثيقة: { companyId, createdBy, used: false, createdAt, expiresAt }
+    // ============================================================
+    match /inviteCodes/{code} {
+      // القراءة: أي مستخدم مسجل الدخول يقدر يتحقق من الكود (باش يعرف واش صحيح)
+      allow read: if isSignedIn();
+
+      // الإنشاء: غير admin ديال الشركة المعنية يقدر يولد كود جديد
+      allow create: if isSignedIn() &&
+        isAdminOf(request.resource.data.companyId);
+
+      // التحديث: يسمح غير بتبديل used من false إلى true (استهلاك الكود)،
+      // وما يسمحش بتبديل أي حقل آخر
+      allow update: if isSignedIn() &&
+        resource.data.used == false &&
+        request.resource.data.used == true &&
+        request.resource.data.companyId == resource.data.companyId &&
+        request.resource.data.createdBy == resource.data.createdBy;
+
+      allow delete: if isAdminOf(resource.data.companyId);
+    }
+
+    // ============================================================
+    // companies/{companyId}/...
+    // ============================================================
+    match /companies/{companyId} {
+
+      // وثيقة معلومات الشركة: companies/{companyId}/info/data
+      // (info هي subcollection، وdata هي الوثيقة الوحيدة فيها — Firestore خاصو دايما
+      // collection ثم document بالتناوب، ماشي subcollection وحدها بلا doc id)
+      match /info/{docId} {
+        allow read: if isMemberOf(companyId);
+        // الإنشاء: أي مستخدم يقدر يخلق شركة جديدة (أول مرة، كيولي admin تلقائيا)
+        allow create: if isSignedIn();
+        allow update, delete: if isAdminOf(companyId);
+      }
+
+      // access/{uid}  →  { role: 'admin' | 'member', name, addedAt, blocked }
+      match /access/{uid} {
+        allow read: if isMemberOf(companyId);
+
+        // حالة 1: خلق شركة جديدة → أول admin (الشركة ماكاينتش قبل)
+        allow create: if isSignedIn() &&
+          request.auth.uid == uid &&
+          request.resource.data.role == 'admin' &&
+          !exists(/databases/$(database)/documents/companies/$(companyId)/info/data);
+
+        // حالة 2: انضمام عامل بكود دعوة صحيح وغير مستعمل لنفس الشركة
+        allow create: if isSignedIn() &&
+          request.auth.uid == uid &&
+          request.resource.data.role == 'member' &&
+          exists(/databases/$(database)/documents/inviteCodes/$(request.resource.data.joinCode)) &&
+          get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.joinCode)).data.companyId == companyId &&
+          get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.joinCode)).data.used == false;
+
+        // تبديل الدور / الحظر / الحذف: admin غير
+        allow update, delete: if isAdminOf(companyId);
+      }
+
+      // بيانات الشركة المشتركة
+      match /cheques/{id} {
+        allow read, create, update: if isMemberOf(companyId);
+        allow delete: if isAdminOf(companyId);
+      }
+      match /stock/{id} {
+        allow read, create, update: if isMemberOf(companyId);
+        allow delete: if isAdminOf(companyId);
+      }
+      match /installations/{id} {
+        allow read, create, update: if isMemberOf(companyId);
+        allow delete: if isAdminOf(companyId);
+      }
+      match /notes/{id} {
+        allow read, create, update, delete: if isMemberOf(companyId);
+      }
+
+      // الدردشة الداخلية الخاصة بالشركة
+      match /privateChats/{key} {
+        allow read, write: if isMemberOf(companyId);
+        match /messages/{msgId} {
+          allow read, create: if isMemberOf(companyId);
+        }
+      }
+
+      // الإعدادات (اختصارات القائمة، إلخ) — شخصية لكل مستخدم داخل الشركة
+      match /settings/{doc} {
+        allow read, write: if isMemberOf(companyId);
+      }
+    }
+
+    // ============================================================
+    // ملاحظة: groups/{id}, codeDirectory, emailDirectory,
+    // externalInvites, externalChats → نظام دردشة الكروبات/الخارجي
+    // كيبقى خارج نطاق هاد التغيير حاليا (خاصو Rules ديالو القديمة
+    // تبقى كيفما هي، ماشي مربوطة بـcompanyId)
+    // ============================================================
+  }
+}

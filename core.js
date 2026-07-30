@@ -46,6 +46,10 @@
     }
     let currentUid = null;
 
+    // 🏢 الشركة (Multi-tenant) : companyId ديال الشركة اللي المستخدم مرتبط بيها + الدور ديالو فيها
+    let currentCompanyId = null;
+    let currentUserRole = null; // 'admin' | 'member' | null
+
     // 🕓 من بدل شنو ومتى — باش نتفاداو تعارض البيانات بين الأجهزة
     let currentUserProfile = null;
     let selectedAvatarValue = '';
@@ -134,23 +138,48 @@
         avatar: selectedAvatarValue || '',
         avatarIsPhoto: selectedAvatarIsPhoto
       };
-      db.collection('users').doc(currentUid).collection('profile').doc('info').set(profileData).then(() => {
-        currentUserProfile = profileData;
+      // merge:true ضروري هنا: باش التبديل ديال الاسم ما يمحيش حقل companyId
+      // اللي كيتزاد من طرف createCompany()/joinCompanyWithCode() (company.js)
+      db.collection('users').doc(currentUid).collection('profile').doc('info').set(profileData, { merge: true }).then(() => {
+        currentUserProfile = Object.assign({}, currentUserProfile, profileData);
         forceProfileSetup = false;
         document.getElementById('profile-setup-modal').classList.remove('show');
         if (typeof renderAccountSwitcher === 'function') renderAccountSwitcher();
+        // بعد ما كمل معلومات البروفايل، إلا ماكانش مرتبط بأي شركة، نبينو له شاشة خلق/انضمام شركة
+        if (!currentCompanyId && typeof openCompanySetupScreen === 'function') {
+          openCompanySetupScreen();
+        }
       });
     }
 
-    function loadUserProfile(uid) {
-      db.collection('users').doc(uid).collection('profile').doc('info').get().then(doc => {
+    // كتجيب معلومات البروفايل + companyId ديال المستخدم + الدور ديالو فالشركة (إلا كان مرتبط بواحدة)
+    // كترجع Promise كترزولفا بـ companyId (ولا null إلا ماكانش مرتبط بأي شركة)
+    function loadUserCompanyContext(uid) {
+      return db.collection('users').doc(uid).collection('profile').doc('info').get().then(doc => {
         if (doc.exists) {
           currentUserProfile = doc.data();
-          if (typeof renderAccountSwitcher === 'function') renderAccountSwitcher();
+          currentCompanyId = doc.data().companyId || null;
         } else {
           currentUserProfile = null;
-          openProfileModal(true);
+          currentCompanyId = null;
         }
+        if (typeof renderAccountSwitcher === 'function') renderAccountSwitcher();
+
+        if (!doc.exists) {
+          // ما عندوش بروفايل خالص (أول تسجيل دخول) → خاصو يعمر الاسم أولا
+          openProfileModal(true);
+          return null;
+        }
+        if (!currentCompanyId) {
+          currentUserRole = null;
+          return null;
+        }
+        return db.collection('companies').doc(currentCompanyId).collection('access').doc(uid).get().then(accDoc => {
+          currentUserRole = accDoc.exists ? (accDoc.data().role || 'member') : null;
+          // إلا ماكانش عندو access ديال هاد الشركة فعليا (حالة نادرة)، نعتبروه بلا شركة
+          if (!accDoc.exists) currentCompanyId = null;
+          return currentCompanyId;
+        });
       });
     }
 
