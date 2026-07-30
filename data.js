@@ -3,6 +3,7 @@
     function loadUserData(companyId) {
       dataLoading = { cheques: true, stock: true, installations: true, notes: true };
       renderNavShortcuts();
+      if (typeof startAccessListener === 'function') startAccessListener(companyId); // قائمة عمال الشركة + الصلاحيات ديالهم
       db.collection('companies').doc(companyId).collection('cheques').onSnapshot(snapshot => {
         dataLoading.cheques = false;
         if (snapshot.empty) {
@@ -323,6 +324,10 @@
 
     function addCheque() {
       if (!currentUid) return;
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('cheques')) {
+        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل الشيكات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les chèques, contactez l'administrateur.");
+        return;
+      }
       const num = document.getElementById('chk-num').value.trim();
       const owner = document.getElementById('chk-owner').value.trim();
       const amount = document.getElementById('chk-amount').value.trim();
@@ -341,6 +346,10 @@
 
     function addStockItem() {
       if (!currentUid) return;
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('stock')) {
+        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل المخزون، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier le stock, contactez l'administrateur.");
+        return;
+      }
       const name = document.getElementById('item-name').value.trim();
       const qty = document.getElementById('item-qty').value.trim();
       const price = document.getElementById('item-price').value.trim() || "0";
@@ -378,6 +387,10 @@
 
     function addNote() {
       if (!currentUid) return;
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('notes')) {
+        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل الملاحظات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les notes, contactez l'administrateur.");
+        return;
+      }
       const text = document.getElementById('note-text').value.trim();
       const datetime = document.getElementById('note-datetime').value;
       if (!text) { alert(currentLang === 'ar' ? "المرجو كتابة نص الملاحظة!\nVeuillez écrire la note !" : "Veuillez écrire la note !\nالمرجو كتابة نص الملاحظة!"); return; }
