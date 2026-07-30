@@ -854,7 +854,7 @@
 
     function showMemberInfo(memberId) {
       if (!memberId) return;
-      const myId = getDeviceId();
+      const myId = currentUid;
       let m;
       if (memberId === myId) {
         const p = getDeviceProfile();

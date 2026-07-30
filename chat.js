@@ -1,37 +1,25 @@
-    // ==================== Team Members Directory (باش نعرفو شكون داخل بنفس الحساب) ====================
+    // ==================== Team Members Directory (دابا الهوية الحقيقية = uid ديال الحساب) ====================
     let teamMembersCache = [];
     let membersUnsubscribe = null;
 
+    // كنزيدو غير معلومات جانبية (أفاتار، هاتف) لوثيقة access الموجودة من قبل (تخلقات وقت
+    // خلق/انضمام الشركة)، بلا ما نبدلو الاسم ديالها (name) اللي تعمر من قبل
     function upsertMember() {
-      if (!currentUid) return;
+      if (!currentUid || !currentCompanyId) return;
       const p = getDeviceProfile();
       if (!p || (!p.firstName && !p.lastName)) return;
-      const myId = getDeviceId();
-      const memberRef = db.collection('users').doc(currentUid).collection('members').doc(myId);
-      const baseData = {
-        firstName: p.firstName || '', lastName: p.lastName || '', phone: p.phone || '',
-        avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto,
+      db.collection('companies').doc(currentCompanyId).collection('access').doc(currentUid).set({
+        avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto, phone: p.phone || '',
         lastActive: new Date().toISOString()
-      };
-      memberRef.get().then(doc => {
-        if (!doc.exists) {
-          // أول مرة كيتصاوب فيها بروفايل هاد الجهاز: إلا ماكاين حتى عضو آخر بعد، هو أول واحد
-          // إذن كيولي "مسؤول" تلقائياً؛ وإلا كاين عضاء آخرين، كيدخل كـ"عامل عادي".
-          db.collection('users').doc(currentUid).collection('members').limit(1).get().then(snap => {
-            baseData.role = snap.empty ? 'admin' : 'member';
-            memberRef.set(baseData, { merge: true }).catch(() => {});
-          }).catch(() => { memberRef.set(baseData, { merge: true }).catch(() => {}); });
-        } else {
-          memberRef.set(baseData, { merge: true }).catch(() => {});
-        }
-      }).catch(() => { memberRef.set(baseData, { merge: true }).catch(() => {}); });
+      }, { merge: true }).catch(() => {});
     }
 
-    function startMembersListener(uid) {
+    function startMembersListener(companyId) {
       if (membersUnsubscribe) { membersUnsubscribe(); membersUnsubscribe = null; }
       teamMembersCache = [];
-      membersUnsubscribe = db.collection('users').doc(uid).collection('members').onSnapshot(snap => {
-        teamMembersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (!companyId) return;
+      membersUnsubscribe = db.collection('companies').doc(companyId).collection('access').onSnapshot(snap => {
+        teamMembersCache = snap.docs.map(d => ({ id: d.id, firstName: d.data().name || '', lastName: '', ...d.data() }));
         renderPrivateChatList();
         renderEmployeesList();
         updateBellNotifications();
@@ -47,11 +35,12 @@
 
     function privateChatKey(idA, idB) { return [idA, idB].sort().join('__'); }
 
-    function startPrivateChatsListener(uid) {
+    function startPrivateChatsListener(companyId) {
       if (privateChatsUnsubscribe) { privateChatsUnsubscribe(); privateChatsUnsubscribe = null; }
       privateChatsCache = [];
-      const myId = getDeviceId();
-      privateChatsUnsubscribe = db.collection('users').doc(uid).collection('privateChats')
+      if (!companyId) return;
+      const myId = currentUid;
+      privateChatsUnsubscribe = db.collection('companies').doc(companyId).collection('privateChats')
         .where('participants', 'array-contains', myId)
         .onSnapshot(snap => {
           privateChatsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -61,12 +50,12 @@
     }
 
     function computeTotalPrivateUnread() {
-      const myId = getDeviceId();
+      const myId = currentUid;
       return privateChatsCache.reduce((sum, c) => sum + ((c.unread && c.unread[myId]) || 0), 0);
     }
 
     function renderPrivateNotifRows() {
-      const myId = getDeviceId();
+      const myId = currentUid;
       let rows = '';
       privateChatsCache.forEach(c => {
         const unread = (c.unread && c.unread[myId]) || 0;
@@ -88,7 +77,7 @@
       const box = document.getElementById('pchat-members-list');
       if (!box) return;
       const t = translations[currentLang];
-      const myId = getDeviceId();
+      const myId = currentUid;
       const others = teamMembersCache.filter(m => m.id !== myId);
       if (!others.length) {
         box.innerHTML = `<div class="chat-empty">${t.pchatEmptyMembers}</div>`;
@@ -109,7 +98,7 @@
     }
 
     function openPrivateChat(otherId) {
-      const myId = getDeviceId();
+      const myId = currentUid;
       const myself = teamMembersCache.find(x => x.id === myId);
       if (isMemberBlocked(myself)) {
         alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> تم حظرك من الدردشة، تواصل مع المسؤول.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Vous avez été bloqué du chat, contactez le responsable.');
@@ -156,7 +145,7 @@
       if (!confirm(currentLang === 'ar'
         ? (isAdmin ? 'هل تريد تنزيل هذا العضو إلى "عامل عادي"؟ لن يتمكن بعدها من حذف العناصر أو إدارة العمال.' : 'هل تريد ترقية هذا العضو إلى "مسؤول"؟ سيحصل على كامل الصلاحيات.')
         : (isAdmin ? 'Rétrograder ce membre en "Employé" ? Il ne pourra plus supprimer d\'éléments ni gérer les employés.' : 'Promouvoir ce membre en "Administrateur" ? Il obtiendra tous les droits.'))) return;
-      db.collection('users').doc(currentUid).collection('members').doc(memberId).set({ role: newRole }, { merge: true }).catch(() => {});
+      db.collection('companies').doc(currentCompanyId).collection('access').doc(memberId).set({ role: newRole }, { merge: true }).catch(() => {});
     }
 
     function isMemberBlocked(m) { return !!(m && m.blocked); }
@@ -167,21 +156,21 @@
       const m = teamMembersCache.find(x => x.id === memberId);
       const newVal = !isMemberBlocked(m);
       if (newVal && !confirm(currentLang === 'ar' ? 'هل أنت متأكد من رغبتك في حظر هذا الموظف؟ لن يتمكن من إرسال رسائل خاصة أو جماعية.' : 'Confirmer le blocage de cet employé ? Il ne pourra plus envoyer de messages (privés ou de groupe).')) return;
-      db.collection('users').doc(currentUid).collection('members').doc(memberId).set({ blocked: newVal }, { merge: true }).catch(() => {});
+      db.collection('companies').doc(currentCompanyId).collection('access').doc(memberId).set({ blocked: newVal }, { merge: true }).catch(() => {});
     }
 
     function toggleMemberGroup(memberId) {
       if (!currentUid || !isCurrentUserAdmin()) return;
       const m = teamMembersCache.find(x => x.id === memberId);
       const newVal = !isMemberInGroup(m);
-      db.collection('users').doc(currentUid).collection('members').doc(memberId).set({ inGroupChat: newVal }, { merge: true }).catch(() => {});
+      db.collection('companies').doc(currentCompanyId).collection('access').doc(memberId).set({ inGroupChat: newVal }, { merge: true }).catch(() => {});
     }
 
     function renderEmployeesList() {
       const box = document.getElementById('employees-list');
       if (!box) return;
       const t = translations[currentLang];
-      const myId = getDeviceId();
+      const myId = currentUid;
       const p = getDeviceProfile();
       const myCode = p && p.code ? p.code : null;
       const others = teamMembersCache.filter(m => m.id !== myId);
@@ -290,9 +279,9 @@
       if (privateMsgsUnsubscribe) { privateMsgsUnsubscribe(); privateMsgsUnsubscribe = null; }
       privateMsgsCache = [];
       if (!currentUid) return;
-      const myId = getDeviceId();
+      const myId = currentUid;
       const key = privateChatKey(myId, otherId);
-      privateMsgsUnsubscribe = db.collection('users').doc(currentUid).collection('privateChats').doc(key).collection('messages')
+      privateMsgsUnsubscribe = db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key).collection('messages')
         .orderBy('createdAt', 'asc')
         .onSnapshot(snap => {
           privateMsgsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -309,7 +298,7 @@
         box.innerHTML = `<div class="chat-empty">${currentLang === 'ar' ? 'لا توجد رسائل بعد، ابدأ المحادثة!' : 'Aucun message, lancez la conversation !'}</div>`;
         return;
       }
-      const myId = getDeviceId();
+      const myId = currentUid;
       box.innerHTML = privateMsgsCache.map(m => {
         const mine = m.senderId === myId;
         const avatarHtml = m.senderAvatarIsPhoto && m.senderAvatar ? `<img src="${m.senderAvatar}">` : (m.senderAvatar || '🙂');
@@ -335,7 +324,7 @@
       if (!text) return;
       const p = getDeviceProfile();
       if (!p || (!p.firstName && !p.lastName)) { openDeviceProfileModal(true); return; }
-      const myId = getDeviceId();
+      const myId = currentUid;
       const otherId = currentPrivateChatWith;
       const myself = teamMembersCache.find(x => x.id === myId);
       const other = teamMembersCache.find(x => x.id === otherId);
@@ -344,7 +333,7 @@
         return;
       }
       const key = privateChatKey(myId, otherId);
-      const parentRef = db.collection('users').doc(currentUid).collection('privateChats').doc(key);
+      const parentRef = db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key);
       const msg = {
         text, senderId: myId, senderName: deviceDisplayName(p),
         senderAvatar: p.avatar || '', senderAvatarIsPhoto: !!p.avatarIsPhoto,
@@ -367,11 +356,11 @@
 
     function markPrivateChatSeen(otherId) {
       if (!currentUid) return;
-      const myId = getDeviceId();
+      const myId = currentUid;
       const key = privateChatKey(myId, otherId);
       const update = {};
       update['unread.' + myId] = 0;
-      db.collection('users').doc(currentUid).collection('privateChats').doc(key).set(update, { merge: true }).catch(() => {});
+      db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key).set(update, { merge: true }).catch(() => {});
     }
 
     function scrollPrivateChatToBottom() {
@@ -399,7 +388,7 @@
     function publishMyCode(code, p) {
       if (!code || !currentUid) return;
       db.collection('codeDirectory').doc(code).set({
-        uid: currentUid, deviceId: getDeviceId(),
+        uid: currentUid, deviceId: currentUid,
         name: deviceDisplayName(p), avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto, phone: p.phone || '', email: p.email || '',
         updatedAt: new Date().toISOString()
       }, { merge: true }).catch(() => {});
@@ -500,7 +489,7 @@
           db.collection('externalChats').doc(chatKey).get().then(chatDoc => {
             if (chatDoc.exists) { input.value = ''; openExternalChat(chatKey, code); return; }
             db.collection('externalInvites').add({
-              fromCode: p.code, fromUid: currentUid, fromDeviceId: getDeviceId(), fromName: deviceDisplayName(p), fromAvatar: p.avatar || '', fromAvatarIsPhoto: !!p.avatarIsPhoto,
+              fromCode: p.code, fromUid: currentUid, fromDeviceId: currentUid, fromName: deviceDisplayName(p), fromAvatar: p.avatar || '', fromAvatarIsPhoto: !!p.avatarIsPhoto,
               toCode: code, toUid: target.uid || '', toDeviceId: target.deviceId || '', toName: target.name || code, toAvatar: target.avatar || '', toAvatarIsPhoto: !!target.avatarIsPhoto,
               status: 'pending', chatKey,
               createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -689,7 +678,7 @@
     const colIcons = { cheques: '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="5" width="20" height="14" rx="2.2"/><line x1="2" y1="9.5" x2="22" y2="9.5"/><path d="M16 15.5h4"/></svg>', stock: '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5"/><path d="M12 12v10"/></svg>', installations: '🛠️', notes: '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="3" width="14" height="18" rx="1.4"/><line x1="7" y1="8" x2="14" y2="8"/><line x1="7" y1="12" x2="11.5" y2="12"/></svg>' };
 
     function computePendingApprovalsForMe() {
-      const myId = getDeviceId();
+      const myId = currentUid;
       const list = [];
       ['cheques', 'stock', 'installations', 'notes'].forEach(col => {
         (globalData[col] || []).forEach(d => {
@@ -751,7 +740,7 @@
       if (!list.includes(groupId)) { list.push(groupId); localStorage.setItem('deeplite_seen_group_joins', JSON.stringify(list)); }
     }
     function computeNewGroupJoinNotifs() {
-      const myId = getDeviceId();
+      const myId = currentUid;
       const seen = getSeenGroupJoins();
       const list = [];
       myVisibleGroups().forEach(g => {
@@ -887,14 +876,14 @@
     }
     function canActOnPendingEdit(item) {
       if (!item || !item.pendingEdit) return false;
-      const myId = getDeviceId();
+      const myId = currentUid;
       if (!item.createdByDeviceId || item.createdByDeviceId === myId) return true;
       return pendingEditFallbackOpen(item.pendingEdit);
     }
 
     function submitPendingEdit(col, id, data) {
       if (!currentCompanyId) return;
-      const myId = getDeviceId();
+      const myId = currentUid;
       const p = getDeviceProfile();
       const name = p ? deviceDisplayName(p) : currentUserLabel();
       const item = (globalData[col] || []).find(x => x.id === id);

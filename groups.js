@@ -42,7 +42,7 @@
     }
 
     function myVisibleGroups() {
-      const myId = getDeviceId();
+      const myId = currentUid;
       const internal = ownedGroupsCache.filter(g => (g.memberIds || []).includes(myId));
       return internal.concat(externalGroupsCache);
     }
@@ -58,7 +58,7 @@
     function myGroupSenderKey(g) {
       if (!g) return null;
       if (isGroupExternalForMe(g)) { const p = getDeviceProfile(); return p ? p.code : null; }
-      return getDeviceId();
+      return currentUid;
     }
 
     function renderGroupsList() {
@@ -89,7 +89,7 @@
 
     function openCreateGroupModal() {
       document.getElementById('cg-name-input').value = '';
-      const myId = getDeviceId();
+      const myId = currentUid;
       const others = teamMembersCache.filter(m => m.id !== myId && !isMemberBlocked(m));
       const box = document.getElementById('cg-members-list');
       if (!others.length) {
@@ -117,7 +117,7 @@
       if (!name) { alert(currentLang === 'ar' ? 'أدخل اسم المجموعة!\nEntrez un nom de groupe !' : 'Entrez un nom de groupe !\nأدخل اسم المجموعة!'); return; }
       const p = getDeviceProfile();
       if (!p || (!p.firstName && !p.lastName)) { closeCreateGroupModal(); openDeviceProfileModal(true); return; }
-      const myId = getDeviceId();
+      const myId = currentUid;
       const chosen = Array.from(document.querySelectorAll('.cg-member-cb:checked')).map(cb => cb.value);
       const memberIds = Array.from(new Set([myId, ...chosen]));
       generateUniqueGroupCode(code => {
@@ -161,7 +161,7 @@
           if (snap.empty) { alert(currentLang === 'ar' ? 'لا توجد مجموعة بهذا الرمز، يرجى التأكد منه!\nAucun groupe avec ce code, vérifiez-le !' : 'Aucun groupe avec ce code, vérifiez-le !\nلا توجد مجموعة بهذا الرمز، يرجى التأكد منه!'); return; }
           const doc = snap.docs[0];
           const g = doc.data();
-          if (g.ownerUid === currentUid && (g.memberIds || []).includes(getDeviceId())) {
+          if (g.ownerUid === currentUid && (g.memberIds || []).includes(currentUid)) {
             input.value = '';
             openGroupChat(doc.id);
             return;
@@ -173,7 +173,7 @@
           }
           const update = {
             externalMemberCodes: firebase.firestore.FieldValue.arrayUnion(myCode),
-            ['externalMembers.' + myCode]: { uid: currentUid, deviceId: getDeviceId(), name: deviceDisplayName(p), avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto },
+            ['externalMembers.' + myCode]: { uid: currentUid, deviceId: currentUid, name: deviceDisplayName(p), avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto },
             ['unread.' + myCode]: 0
           };
           doc.ref.update(update).then(() => {
@@ -339,7 +339,7 @@
     }
 
     function computeGroupChatUnread() {
-      const myId = getDeviceId();
+      const myId = currentUid;
       const p = getDeviceProfile();
       let total = 0;
       ownedGroupsCache.forEach(g => { if ((g.memberIds || []).includes(myId)) total += (g.unread && g.unread[myId]) || 0; });
@@ -384,7 +384,7 @@
     function renderGroupCurrentMembers(g) {
       const box = document.getElementById('gs-current-members');
       if (!box) return;
-      const myId = getDeviceId();
+      const myId = currentUid;
       let html = (g.memberIds || []).map(id => {
         const m = id === myId ? { ...(getDeviceProfile() || {}) } : teamMembersCache.find(x => x.id === id);
         const name = id === myId ? (currentLang === 'ar' ? 'راك أنت' : 'Vous') : (m ? deviceDisplayName(m) : id);

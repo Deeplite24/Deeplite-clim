@@ -67,8 +67,8 @@
         renderAccountSwitcher();
         ensureDeviceProfile();
         startGroupsListeners();
-        startMembersListener(currentUid);
-        startPrivateChatsListener(currentUid);
+        startMembersListener(currentCompanyId);
+        startPrivateChatsListener(currentCompanyId);
         upsertMember();
         initExternalFeatures();
         if (typeof toggleAdminInviteButton === 'function') toggleAdminInviteButton();
@@ -124,8 +124,8 @@
           renderAccountSwitcher();
           ensureDeviceProfile();
           startGroupsListeners();
-          startMembersListener(currentUid);
-          startPrivateChatsListener(currentUid);
+          startMembersListener(currentCompanyId);
+          startPrivateChatsListener(currentCompanyId);
           upsertMember();
           initExternalFeatures();
         }).catch(err => {
