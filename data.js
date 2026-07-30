@@ -368,6 +368,10 @@
 
     function addInstallation() {
       if (!currentUid) return;
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('installations')) {
+        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل التركيب/الخدمات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les installations/services, contactez l'administrateur.");
+        return;
+      }
       const client = document.getElementById('client-name').value.trim();
       const phone = document.getElementById('client-phone').value.trim();
       const map = document.getElementById('client-map').value.trim();

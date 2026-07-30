@@ -98,6 +98,10 @@
           alert(currentLang === 'ar' ? 'هاد الكود تم استعماله من قبل!' : 'Ce code a déjà été utilisé !');
           return;
         }
+        if (codeData.expiresAt && codeData.expiresAt.toDate() < new Date()) {
+          alert(currentLang === 'ar' ? 'انتهت صلاحية هاد الكود، اطلب واحد جديد من المسؤول.' : "Ce code a expiré, demandez-en un nouveau à l'administrateur.");
+          return;
+        }
         const companyId = codeData.companyId;
 
         const batch = db.batch();
@@ -107,7 +111,7 @@
           name: currentUserLabel(),
           addedAt: firebase.firestore.FieldValue.serverTimestamp(),
           blocked: false,
-          permissions: { cheques: false, stock: false, notes: false }, // العامل الجديد بلا صلاحيات، الـadmin هو لي كيعطيه من "العمال"
+          permissions: { cheques: false, stock: false, installations: false, notes: false }, // العامل الجديد بلا صلاحيات، الـadmin هو لي كيعطيه من "العمال"
           joinCode: code // خاص الـRule يتحقق من هاد الحقل باش يسمح بالإنشاء
         });
         const profileRef = db.collection('users').doc(currentUid).collection('profile').doc('info');
@@ -150,25 +154,76 @@
       document.getElementById('ci-invite-code').textContent = '------';
       document.getElementById('company-invite-modal').classList.add('show');
       generateNewInviteCode();
+      startActiveInviteCodesListener();
     }
 
     function closeCompanyInviteModal() {
       document.getElementById('company-invite-modal').classList.remove('show');
+      if (activeInviteCodesUnsub) { activeInviteCodesUnsub(); activeInviteCodesUnsub = null; }
     }
 
     function generateNewInviteCode() {
       if (currentUserRole !== 'admin' || !currentCompanyId) return;
       const code = generateInviteCodeString();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // صالح 24 ساعة غير
       db.collection('inviteCodes').doc(code).set({
         companyId: currentCompanyId,
         createdBy: currentUid,
         used: false,
+        expiresAt,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }).then(() => {
         document.getElementById('ci-invite-code').textContent = code;
       }).catch(err => {
         console.error('generateInviteCode error:', err);
         alert(currentLang === 'ar' ? 'وقع خطأ فتوليد الكود، حاول من جديد.' : "Une erreur s'est produite, réessayez.");
+      });
+    }
+
+    // ---------------- الأكواد النشيطة (مازال ما تستعملوش) + إلغاء ----------------
+    let activeInviteCodesCache = [];
+    let activeInviteCodesUnsub = null;
+
+    function startActiveInviteCodesListener() {
+      if (activeInviteCodesUnsub) { activeInviteCodesUnsub(); activeInviteCodesUnsub = null; }
+      activeInviteCodesCache = [];
+      if (!currentCompanyId) return;
+      activeInviteCodesUnsub = db.collection('inviteCodes')
+        .where('companyId', '==', currentCompanyId)
+        .where('used', '==', false)
+        .onSnapshot(snap => {
+          activeInviteCodesCache = snap.docs.map(d => ({ code: d.id, ...d.data() }));
+          renderActiveInviteCodes();
+        }, err => console.error('startActiveInviteCodesListener error:', err));
+    }
+
+    function renderActiveInviteCodes() {
+      const box = document.getElementById('active-invite-codes-list');
+      if (!box) return;
+      const now = new Date();
+      const valid = activeInviteCodesCache.filter(c => !c.expiresAt || c.expiresAt.toDate() > now);
+      if (!valid.length) {
+        box.innerHTML = `<div style="font-size:11px; color:#94a3b8; text-align:center;">${currentLang === 'ar' ? 'ماكاين حتى كود نشيط دابا.' : 'Aucun code actif pour le moment.'}</div>`;
+        return;
+      }
+      box.innerHTML = valid.map(c => {
+        const expText = c.expiresAt ? new Date(c.expiresAt.toDate()).toLocaleString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR') : '';
+        return `<div style="display:flex; align-items:center; justify-content:space-between; background:#0f172a; border:1px solid #334155; border-radius:10px; padding:8px 10px; margin-bottom:6px;">
+          <div>
+            <div style="font-size:15px; font-weight:800; letter-spacing:2px; color:#38bdf8;">${c.code}</div>
+            <div style="font-size:10px; color:#94a3b8;">${currentLang === 'ar' ? 'صالح حتى:' : "Valide jusqu'au :"} ${expText}</div>
+          </div>
+          <button class="emp-btn emp-danger" style="font-size:11px;" onclick="revokeInviteCode('${c.code}')">${currentLang === 'ar' ? 'إلغاء' : 'Révoquer'}</button>
+        </div>`;
+      }).join('');
+    }
+
+    function revokeInviteCode(code) {
+      if (currentUserRole !== 'admin' || !currentCompanyId) return;
+      if (!confirm(currentLang === 'ar' ? 'هل تريد إلغاء هذا الكود؟ ما غاديش يبقى صالح للاستعمال.' : 'Révoquer ce code ? Il ne pourra plus être utilisé.')) return;
+      db.collection('inviteCodes').doc(code).delete().catch(err => {
+        console.error('revokeInviteCode error:', err);
+        alert(currentLang === 'ar' ? 'وقع خطأ فالإلغاء، حاول من جديد.' : "Une erreur s'est produite, réessayez.");
       });
     }
 
@@ -179,7 +234,7 @@
     let companyAccessUnsubscribe = null;
 
     function defaultMemberPermissions() {
-      return { cheques: false, stock: false, notes: false };
+      return { cheques: false, stock: false, installations: false, notes: false };
     }
 
     function startAccessListener(companyId) {
@@ -194,7 +249,7 @@
 
     function memberPermissions(m) {
       if (!m) return defaultMemberPermissions();
-      if (m.role === 'admin') return { cheques: true, stock: true, notes: true }; // الـadmin عندو كامل الصلاحيات ديما
+      if (m.role === 'admin') return { cheques: true, stock: true, installations: true, notes: true }; // الـadmin عندو كامل الصلاحيات ديما
       return Object.assign(defaultMemberPermissions(), m.permissions || {});
     }
 
@@ -243,6 +298,21 @@
       db.collection('companies').doc(currentCompanyId).collection('access').doc(uid).set({ role: newRole }, { merge: true }).catch(err => console.error('toggleAccessRole error:', err));
     }
 
+    function removeEmployeeFromCompany(uid) {
+      if (!isCurrentUserAdmin() || !currentCompanyId) return;
+      const m = companyAccessCache.find(x => x.id === uid);
+      if (!m) return;
+      if (m.role === 'admin' && companyAccessCache.filter(x => x.role === 'admin').length <= 1) {
+        alert(currentLang === 'ar' ? 'خاص يبقى مسؤول واحد على الأقل فالشركة، ما يمكنش تزال.' : 'Il doit rester au moins un administrateur, impossible de le retirer.');
+        return;
+      }
+      if (!confirm(currentLang === 'ar' ? 'هل أنت متأكد من إزالة هذا العامل نهائياً من الشركة؟ غايفقد الوصول لكل معطيات الشركة، ويقدر يرجع غير بكود دعوة جديد.' : 'Retirer définitivement cet employé de la société ? Il perdra tout accès aux données et devra rejoindre à nouveau avec un nouveau code.')) return;
+      db.collection('companies').doc(currentCompanyId).collection('access').doc(uid).delete().catch(err => {
+        console.error('removeEmployeeFromCompany error:', err);
+        alert(currentLang === 'ar' ? 'وقع خطأ فالإزالة، حاول من جديد.' : "Une erreur s'est produite, réessayez.");
+      });
+    }
+
     function renderCompanyEmployeesList() {
       const box = document.getElementById('company-employees-list');
       if (!box) return;
@@ -267,6 +337,7 @@
         const blockedBadge = blocked ? `<span class="emp-name-badge" style="background:rgba(248,113,113,0.16); color:#f87171;">${currentLang === 'ar' ? 'محظور' : 'Bloqué'}</span>` : '';
         const roleBtn = iAmAdmin ? `<button class="emp-btn" onclick="toggleAccessRole('${m.id}')">${mIsAdmin ? (currentLang === 'ar' ? 'تنزيل لعامل عادي' : 'Rétrograder') : (currentLang === 'ar' ? 'ترقية لمسؤول' : 'Promouvoir admin')}</button>` : '';
         const blockBtn = iAmAdmin ? `<button class="emp-btn ${blocked ? 'emp-danger' : ''}" onclick="toggleAccessBlock('${m.id}')">${blocked ? (currentLang === 'ar' ? 'فك الحظر' : 'Débloquer') : (currentLang === 'ar' ? 'حظر' : 'Bloquer')}</button>` : '';
+        const removeBtn = iAmAdmin ? `<button class="emp-btn emp-danger" onclick="removeEmployeeFromCompany('${m.id}')">${currentLang === 'ar' ? 'إزالة نهائياً' : 'Retirer'}</button>` : '';
 
         return `<div class="emp-item ${blocked ? 'emp-blocked' : ''}">
           <div class="emp-top-row">
@@ -278,9 +349,10 @@
           ${!mIsAdmin ? `<div class="emp-perms-row" style="margin:8px 0; display:flex; flex-wrap:wrap;">
             ${permRow('cheques', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg> الشيكات' : 'Chèques')}
             ${permRow('stock', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/></svg> المخزون' : 'Stock')}
+            ${permRow('installations', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> التركيب/الخدمات' : 'Installations')}
             ${permRow('notes', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4"/></svg> الملاحظات' : 'Notes')}
           </div>` : `<div style="font-size:11px; color:#94a3b8; margin:6px 0;">${currentLang === 'ar' ? 'المسؤول عندو كامل الصلاحيات تلقائياً.' : "L'administrateur a tous les droits automatiquement."}</div>`}
-          <div class="emp-actions">${roleBtn}${blockBtn}</div>
+          <div class="emp-actions">${roleBtn}${blockBtn}${removeBtn}</div>
         </div>`;
       }).join('');
     }
