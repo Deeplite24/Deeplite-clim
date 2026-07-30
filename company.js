@@ -39,26 +39,26 @@
 
       const companyId = 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
       const infoDocRef = db.collection('companies').doc(companyId);
+      const batch = db.batch();
 
-      // مؤقتا: كل كتابة وحدها بلا batch باش نعرفو بالضبط فين واقعة رفضة الصلاحية
-      // ملاحظة: access خاصو يتخلق قبل info، حيت الـRule ديال access كتتحقق
-      // "!exists(info/data)" — إلا خلقنا info قبل، هاد الشرط غادي يفشل دايما
-      infoDocRef.collection('access').doc(currentUid).set({
+      batch.set(infoDocRef.collection('access').doc(currentUid), {
         role: 'admin',
         name: currentUserLabel(),
         addedAt: firebase.firestore.FieldValue.serverTimestamp(),
         blocked: false
-      }).then(() => {
-        return infoDocRef.collection('info').doc('data').set({
-          name,
-          createdBy: currentUid,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(err => { throw { step: 2, err }; });
-      }, err => { throw { step: 1, err }; }).then(() => {
-        return db.collection('users').doc(currentUid).collection('profile').doc('info')
-          .set({ companyId }, { merge: true })
-          .catch(err => { throw { step: 3, err }; });
-      }).then(() => {
+      });
+      // adminUid هنا كتخدم مع getAfter() فالـRules باش تتأكد أن هاد الشركة تخلقات
+      // فنفس اللحظة من طرف نفس الشخص اللي كيدير روحو admin (بلا ما تعتمد على exists()
+      // اللي بانت غير موثوقة فحالة الكتابة المزدوجة فنفس الـbatch)
+      batch.set(infoDocRef.collection('info').doc('data'), {
+        name,
+        adminUid: currentUid,
+        createdBy: currentUid,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      batch.set(db.collection('users').doc(currentUid).collection('profile').doc('info'), { companyId }, { merge: true });
+
+      batch.commit().then(() => {
         currentCompanyId = companyId;
         currentUserRole = 'admin';
         currentUserProfile = Object.assign({}, currentUserProfile, { companyId });
@@ -72,11 +72,9 @@
         upsertMember();
         initExternalFeatures();
         if (typeof toggleAdminInviteButton === 'function') toggleAdminInviteButton();
-      }).catch(wrapped => {
-        const step = wrapped && wrapped.step;
-        const err = (wrapped && wrapped.err) || wrapped;
-        console.error('createCompany error at step', step, err);
-        alert('DEBUG step ' + step + ': ' + (err.code || '') + ' — ' + (err.message || err));
+      }).catch(err => {
+        console.error('createCompany error:', err);
+        alert(currentLang === 'ar' ? 'وقع خطأ فخلق الشركة، حاول من جديد.' : "Une erreur s'est produite lors de la création de la société, réessayez.");
       });
     }
 
