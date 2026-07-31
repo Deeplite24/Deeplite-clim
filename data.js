@@ -548,7 +548,7 @@
         </head>
         <body>
           <h1>Deep Lite HVAC - ${cfg.title}</h1>
-          <p>Date: ${new Date().toLocaleString()}</p>
+          <p>Date: ${formatDateTimeFull(new Date())}</p>
           <table><tr>${cfg.headers.map(h => `<th>${h}</th>`).join('')}</tr>
           ${cfg.rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
           </table>
@@ -564,7 +564,7 @@
       const d = globalData.installations.find(x => x.id === id);
       if (!d) return;
       const isAr = currentLang === 'ar';
-      const dateStr = d.date ? d.date.replace('T', ' ') : new Date().toLocaleString();
+      const dateStr = d.date ? d.date.replace('T', ' ') : formatDateTimeFull(new Date());
       let printWindow = window.open('', '_blank');
       let htmlContent = `
         <html lang="${currentLang}" dir="${translations[currentLang].dir}">
@@ -628,7 +628,7 @@
         </head>
         <body>
           <h1>Deep Lite HVAC - Report</h1>
-          <p>Date: ${new Date().toLocaleString()}</p>
+          <p>Date: ${formatDateTimeFull(new Date())}</p>
           <h2>Chèques (${globalData.cheques.length})</h2>
           <table><tr><th>N°</th><th>Propriétaire</th><th>Montant</th><th>Type</th><th>Date</th></tr>
           ${globalData.cheques.map(c => `<tr><td>${c.num}</td><td>${c.owner}</td><td>${c.amount} DH</td><td>${c.type}</td><td>${c.date || '-'}</td></tr>`).join('')}
