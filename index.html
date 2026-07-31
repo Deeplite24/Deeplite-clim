@@ -430,9 +430,7 @@
           <div class="list-title-row">
             <h2 id="chk-list-t">سجل الشيكات</h2>
             <button class="section-pdf-btn" onclick="exportSectionPDF('cheques')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><line x1="9" y1="12.5" x2="15" y2="12.5"/><line x1="9" y1="16" x2="15" y2="16"/></svg> PDF</button>
-          </div>
-          <div class="shortcut-add-row">
-            <button class="section-shortcut-add-btn" id="shortcut-add-btn-cheques" onclick="toggleNavShortcut('cheques')">+ إضافة</button>
+            <button class="section-shortcut-add-btn-inline" id="shortcut-add-btn-cheques" onclick="toggleNavShortcut('cheques')">+ إضافة</button>
           </div>
           <input type="text" id="chk-search" class="search-input" placeholder="🔍 بحث..." oninput="onSearchInput('cheques', this.value)">
           <div id="cheques-list">جاري التحميل...</div>
@@ -469,9 +467,7 @@
           <div class="list-title-row">
             <h2 id="stk-list-t">سجل المخزن</h2>
             <button class="section-pdf-btn" onclick="exportSectionPDF('stock')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><line x1="9" y1="12.5" x2="15" y2="12.5"/><line x1="9" y1="16" x2="15" y2="16"/></svg> PDF</button>
-          </div>
-          <div class="shortcut-add-row">
-            <button class="section-shortcut-add-btn" id="shortcut-add-btn-stock" onclick="toggleNavShortcut('stock')">+ إضافة</button>
+            <button class="section-shortcut-add-btn-inline" id="shortcut-add-btn-stock" onclick="toggleNavShortcut('stock')">+ إضافة</button>
           </div>
           <input type="text" id="stk-search" class="search-input" placeholder="🔍 بحث..." oninput="onSearchInput('stock', this.value)">
           <div id="stock-list">جاري التحميل...</div>
@@ -499,6 +495,15 @@
             <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;" id="srv-lbl-dt">وقت التنبيه (اختياري):</label>
             <input type="datetime-local" id="install-date">
           </div>
+          <div class="form-group">
+            <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;" id="srv-lbl-repeat">تكرار الصيانة (اختياري):</label>
+            <select id="install-repeat">
+              <option value="" id="srv-repeat-opt-0">بدون تكرار</option>
+              <option value="daily" id="srv-repeat-opt-1">يومي</option>
+              <option value="weekly" id="srv-repeat-opt-2">أسبوعي</option>
+              <option value="monthly" id="srv-repeat-opt-3">شهري</option>
+            </select>
+          </div>
           <button class="btn-submit" onclick="addInstallation()" id="srv-btn-add">+ تسجيل الخدمة</button>
           <span class="cancel-edit-link" id="srv-cancel-edit" onclick="cancelEditInstallation()">✕ إلغاء التعديل</span>
         </div>
@@ -506,9 +511,7 @@
           <div class="list-title-row">
             <h2 id="srv-list-t">سجل الزبائن والخدمات</h2>
             <button class="section-pdf-btn" onclick="exportSectionPDF('installations')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><line x1="9" y1="12.5" x2="15" y2="12.5"/><line x1="9" y1="16" x2="15" y2="16"/></svg> PDF</button>
-          </div>
-          <div class="shortcut-add-row">
-            <button class="section-shortcut-add-btn" id="shortcut-add-btn-install" onclick="toggleNavShortcut('install')">+ إضافة</button>
+            <button class="section-shortcut-add-btn-inline" id="shortcut-add-btn-install" onclick="toggleNavShortcut('install')">+ إضافة</button>
           </div>
           <input type="text" id="srv-search" class="search-input" placeholder="🔍 بحث..." oninput="onSearchInput('installations', this.value)">
           <div id="install-list">جاري التحميل...</div>
@@ -524,6 +527,15 @@
             <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;" id="nts-lbl-dt">وقت التنبيه (اختياري):</label>
             <input type="datetime-local" id="note-datetime">
           </div>
+          <div class="form-group">
+            <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;" id="nts-lbl-repeat">تكرار التذكير (اختياري):</label>
+            <select id="note-repeat">
+              <option value="" id="nts-repeat-opt-0">بدون تكرار</option>
+              <option value="daily" id="nts-repeat-opt-1">يومي</option>
+              <option value="weekly" id="nts-repeat-opt-2">أسبوعي</option>
+              <option value="monthly" id="nts-repeat-opt-3">شهري</option>
+            </select>
+          </div>
           <button class="btn-submit" onclick="addNote()" id="nts-btn-add">+ حفظ الملاحظة</button>
           <span class="cancel-edit-link" id="nts-cancel-edit" onclick="cancelEditNote()">✕ إلغاء التعديل</span>
         </div>
@@ -531,9 +543,7 @@
           <div class="list-title-row">
             <h2 id="nts-list-t">كناش الملاحظات</h2>
             <button class="section-pdf-btn" onclick="exportSectionPDF('notes')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><line x1="9" y1="12.5" x2="15" y2="12.5"/><line x1="9" y1="16" x2="15" y2="16"/></svg> PDF</button>
-          </div>
-          <div class="shortcut-add-row">
-            <button class="section-shortcut-add-btn" id="shortcut-add-btn-notes" onclick="toggleNavShortcut('notes')">+ إضافة</button>
+            <button class="section-shortcut-add-btn-inline" id="shortcut-add-btn-notes" onclick="toggleNavShortcut('notes')">+ إضافة</button>
           </div>
           <input type="text" id="nts-search" class="search-input" placeholder="🔍 بحث..." oninput="onSearchInput('notes', this.value)">
           <div id="notes-list">جاري التحميل...</div>
