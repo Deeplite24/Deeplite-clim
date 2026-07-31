@@ -1,3 +1,14 @@
+    // قراءة/تعمير آمنة لخانة فورم: إلا العنصر ماكانش موجود فـ index.html (مثلاً نسخة قديمة
+    // منشورة ماعندهاش خانة جديدة)، كنرجعو قيمة افتراضية عوض ما ندوزو exception توقف الدالة كاملة.
+    function safeVal(id, fallback) {
+      const el = document.getElementById(id);
+      return el ? el.value : (fallback !== undefined ? fallback : '');
+    }
+    function safeSetVal(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    }
+
     // ⚠️ الپارامتر دابا هو companyId (ماشي uid) — البيانات (شيكات، ستوك، انستالاسيون، ملاحظات)
     // ولات مشتركة بين جميع أعضاء نفس الشركة، عوض ما كانت معزولة لكل حساب Firebase وحدو
     function loadUserData(companyId) {
@@ -70,15 +81,15 @@
         if (c.type === 'شيك صادر') outTotal += amt;
         else if (c.type === 'شيك وارد') inTotal += amt;
       });
-      document.getElementById('stat-cheques-out').textContent = outTotal.toLocaleString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR') + ' DH';
-      document.getElementById('stat-cheques-in').textContent = inTotal.toLocaleString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR') + ' DH';
+      document.getElementById('stat-cheques-out').textContent = formatNumberManual(outTotal) + ' DH';
+      document.getElementById('stat-cheques-in').textContent = formatNumberManual(inTotal) + ' DH';
 
       let stockValue = 0, lowCount = 0;
       globalData.stock.forEach(s => {
         stockValue += (Number(s.qty) || 0) * (Number(s.price) || 0);
         if (s.minQty && Number(s.qty) <= Number(s.minQty)) lowCount++;
       });
-      document.getElementById('stat-stock-value').textContent = stockValue.toLocaleString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR') + ' DH';
+      document.getElementById('stat-stock-value').textContent = formatNumberManual(stockValue) + ' DH';
 
       const lowCard = document.getElementById('stat-low-stock-card');
       document.getElementById('stat-low-stock-count').textContent = lowCount;
@@ -290,7 +301,7 @@
       document.getElementById('clim-type').value = item.clim || '';
       document.getElementById('service-type').value = item.service;
       document.getElementById('install-date').value = item.date || '';
-      document.getElementById('install-repeat').value = item.repeat || '';
+      safeSetVal('install-repeat', item.repeat || '');
       document.getElementById('srv-btn-add').innerHTML = currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4"/><rect x="8" y="13" width="8" height="6"/></svg> تحديث الخدمة' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4"/><rect x="8" y="13" width="8" height="6"/></svg> Mettre à jour';
       document.getElementById('srv-cancel-edit').classList.add('show');
       openSection('install-section');
@@ -299,7 +310,7 @@
 
     function cancelEditInstallation() {
       editingItem.installations = null;
-      document.getElementById('client-name').value = ''; document.getElementById('client-phone').value = ''; document.getElementById('client-map').value = ''; document.getElementById('clim-type').value = ''; document.getElementById('service-type').selectedIndex = 0; document.getElementById('install-date').value = ''; document.getElementById('install-repeat').value = '';
+      document.getElementById('client-name').value = ''; document.getElementById('client-phone').value = ''; document.getElementById('client-map').value = ''; document.getElementById('clim-type').value = ''; document.getElementById('service-type').selectedIndex = 0; document.getElementById('install-date').value = ''; safeSetVal('install-repeat', '');
       document.getElementById('srv-btn-add').innerHTML = translations[currentLang].srvBtnAdd;
       document.getElementById('srv-cancel-edit').classList.remove('show');
     }
@@ -310,7 +321,7 @@
       editingItem.notes = id;
       document.getElementById('note-text').value = item.text;
       document.getElementById('note-datetime').value = item.datetime || '';
-      document.getElementById('note-repeat').value = item.repeat || '';
+      safeSetVal('note-repeat', item.repeat || '');
       document.getElementById('nts-btn-add').innerHTML = currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4"/><rect x="8" y="13" width="8" height="6"/></svg> تحديث الملاحظة' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4"/><rect x="8" y="13" width="8" height="6"/></svg> Mettre à jour';
       document.getElementById('nts-cancel-edit').classList.add('show');
       openSection('notes-section');
@@ -319,7 +330,7 @@
 
     function cancelEditNote() {
       editingItem.notes = null;
-      document.getElementById('note-text').value = ''; document.getElementById('note-datetime').value = ''; document.getElementById('note-repeat').value = '';
+      document.getElementById('note-text').value = ''; document.getElementById('note-datetime').value = ''; safeSetVal('note-repeat', '');
       document.getElementById('nts-btn-add').innerHTML = translations[currentLang].ntsBtnAdd;
       document.getElementById('nts-cancel-edit').classList.remove('show');
     }
@@ -380,14 +391,14 @@
       const clim = document.getElementById('clim-type').value.trim();
       const service = document.getElementById('service-type').value;
       const date = document.getElementById('install-date').value;
-      const repeat = document.getElementById('install-repeat').value;
+      const repeat = safeVal('install-repeat', '');
       if (!client || !service) { alert(currentLang === 'ar' ? "المرجو إدخال اسم الزبون ونوع الخدمة!\nVeuillez entrer le client et le service !" : "Veuillez entrer le client et le service !\nالمرجو إدخال اسم الزبون ونوع الخدمة!"); return; }
       if (editingItem.installations) {
         submitPendingEdit('installations', editingItem.installations, { client, phone, map, clim, service, date, repeat });
         cancelEditInstallation();
       } else {
         db.collection('companies').doc(currentCompanyId).collection('installations').add({ client, phone, map, clim, service, date, repeat, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
-          document.getElementById('client-name').value = ''; document.getElementById('client-phone').value = ''; document.getElementById('client-map').value = ''; document.getElementById('clim-type').value = ''; document.getElementById('service-type').selectedIndex = 0; document.getElementById('install-date').value = ''; document.getElementById('install-repeat').value = '';
+          document.getElementById('client-name').value = ''; document.getElementById('client-phone').value = ''; document.getElementById('client-map').value = ''; document.getElementById('clim-type').value = ''; document.getElementById('service-type').selectedIndex = 0; document.getElementById('install-date').value = ''; safeSetVal('install-repeat', '');
         }).catch(showSaveError);
       }
     }
@@ -400,14 +411,14 @@
       }
       const text = document.getElementById('note-text').value.trim();
       const datetime = document.getElementById('note-datetime').value;
-      const repeat = document.getElementById('note-repeat').value;
+      const repeat = safeVal('note-repeat', '');
       if (!text) { alert(currentLang === 'ar' ? "المرجو كتابة نص الملاحظة!\nVeuillez écrire la note !" : "Veuillez écrire la note !\nالمرجو كتابة نص الملاحظة!"); return; }
       if (editingItem.notes) {
         submitPendingEdit('notes', editingItem.notes, { text, datetime, repeat });
         cancelEditNote();
       } else {
         db.collection('companies').doc(currentCompanyId).collection('notes').add({ text, datetime, repeat, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
-          document.getElementById('note-text').value = ''; document.getElementById('note-datetime').value = ''; document.getElementById('note-repeat').value = '';
+          document.getElementById('note-text').value = ''; document.getElementById('note-datetime').value = ''; safeSetVal('note-repeat', '');
         }).catch(showSaveError);
       }
     }

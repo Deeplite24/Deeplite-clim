@@ -304,7 +304,7 @@
         const avatarHtml = m.senderAvatarIsPhoto && m.senderAvatar ? `<img src="${m.senderAvatar}">` : (m.senderAvatar || '🙂');
         let timeStr = '';
         try {
-          if (m.createdAt && m.createdAt.toDate) timeStr = m.createdAt.toDate().toLocaleTimeString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR', { hour: '2-digit', minute: '2-digit' });
+          if (m.createdAt && m.createdAt.toDate) timeStr = formatTimeShort(m.createdAt.toDate());
         } catch (e) {}
         return `
           <div class="chat-msg-row ${mine ? 'mine' : ''}">
@@ -613,7 +613,7 @@
         const avatarHtml = m.senderAvatarIsPhoto && m.senderAvatar ? `<img src="${m.senderAvatar}">` : (m.senderAvatar || '🙂');
         let timeStr = '';
         try {
-          if (m.createdAt && m.createdAt.toDate) timeStr = m.createdAt.toDate().toLocaleTimeString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR', { hour: '2-digit', minute: '2-digit' });
+          if (m.createdAt && m.createdAt.toDate) timeStr = formatTimeShort(m.createdAt.toDate());
         } catch (e) {}
         return `
           <div class="chat-msg-row ${mine ? 'mine' : ''}">
@@ -937,7 +937,7 @@
       const t = translations[currentLang];
       const canApprove = canActOnPendingEdit(d);
       let dateStr = '';
-      try { dateStr = new Date(d.pendingEdit.proposedAt).toLocaleString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      try { dateStr = formatDateTimeShort(new Date(d.pendingEdit.proposedAt)); } catch (e) {}
       let actionsHtml;
       if (!canApprove) {
         actionsHtml = `<div class="pending-edit-waiting">${t.pendingWaitingOther}<div style="font-size:11px; opacity:0.8; margin-top:4px;">${t.pendingFallbackHint}</div></div>`;
@@ -959,11 +959,36 @@
       }).map(x => x.v);
     }
 
+    // ==================== تنسيق يدوي للتاريخ/الوقت/الأرقام ====================
+    // بعض الأجهزة (خصوصاً Chrome Android قديم) ما عندهاش بيانات ICU كاملة لـ locale 'ar-MA'،
+    // وهادشي كيخرج نص مكسور (مثلاً "Ccc Cccc" عوض التاريخ). الحل: نبنيو النص يدوياً بلا Intl.
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function formatDateTimeShort(date) {
+      return `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)} ${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+    }
+
+    function formatDateTimeFull(date) {
+      return `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${date.getFullYear()} ${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+    }
+
+    function formatTimeShort(date) {
+      return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+    }
+
+    function formatNumberManual(n) {
+      n = Math.round(Number(n) || 0);
+      const neg = n < 0;
+      n = Math.abs(n);
+      const withCommas = n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return (neg ? '-' : '') + withCommas;
+    }
+
     function formatUpdateInfo(d) {
       if (!d.updatedAt) return '';
       let dateStr = '';
       try {
-        dateStr = new Date(d.updatedAt).toLocaleString(currentLang === 'ar' ? 'ar-MA' : 'fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        dateStr = formatDateTimeShort(new Date(d.updatedAt));
       } catch (e) {}
       const label = currentLang === 'ar' ? 'آخر تعديل' : 'Dernière modif.';
       return `<div class="item-sub" style="color:#38bdf8;">🕓 ${label}: ${d.updatedBy || '-'}${dateStr ? ' | ' + dateStr : ''}</div>`;
@@ -980,8 +1005,8 @@
     const previousValueFieldLabels = {
       cheques: { num: { ar: 'رقم الشيك', fr: 'N° chèque' }, owner: { ar: 'الصاحب', fr: 'Propriétaire' }, amount: { ar: 'المبلغ', fr: 'Montant' }, type: { ar: 'النوع', fr: 'Type' }, date: { ar: 'التاريخ', fr: 'Date' } },
       stock: { name: { ar: 'الاسم', fr: 'Nom' }, qty: { ar: 'الكمية', fr: 'Quantité' }, price: { ar: 'الثمن', fr: 'Prix' }, minQty: { ar: 'الحد الأدنى', fr: 'Seuil minimum' }, date: { ar: 'التاريخ', fr: 'Date' } },
-      installations: { client: { ar: 'الزبون', fr: 'Client' }, phone: { ar: 'الهاتف', fr: 'Téléphone' }, map: { ar: 'الموقع', fr: 'Position' }, clim: { ar: 'التفاصيل', fr: 'Détails' }, service: { ar: 'الخدمة', fr: 'Service' }, date: { ar: 'التاريخ', fr: 'Date' } },
-      notes: { text: { ar: 'النص', fr: 'Texte' }, datetime: { ar: 'التاريخ', fr: 'Date' } }
+      installations: { client: { ar: 'الزبون', fr: 'Client' }, phone: { ar: 'الهاتف', fr: 'Téléphone' }, map: { ar: 'الموقع', fr: 'Position' }, clim: { ar: 'التفاصيل', fr: 'Détails' }, service: { ar: 'الخدمة', fr: 'Service' }, date: { ar: 'التاريخ', fr: 'Date' }, repeat: { ar: 'التكرار', fr: 'Récurrence' } },
+      notes: { text: { ar: 'النص', fr: 'Texte' }, datetime: { ar: 'التاريخ', fr: 'Date' }, repeat: { ar: 'التكرار', fr: 'Récurrence' } }
     };
 
     function renderPreviousValueBox(col, d) {
