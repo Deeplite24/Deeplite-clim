@@ -337,7 +337,8 @@
 
     function addCheque() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('cheques')) {
+      const chqAction = editingItem.cheques ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('cheques', chqAction)) {
         alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل الشيكات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les chèques, contactez l'administrateur.");
         return;
       }
@@ -359,7 +360,8 @@
 
     function addStockItem() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('stock')) {
+      const stkAction = editingItem.stock ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('stock', stkAction)) {
         alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل المخزون، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier le stock, contactez l'administrateur.");
         return;
       }
@@ -381,7 +383,8 @@
 
     function addInstallation() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('installations')) {
+      const instAction = editingItem.installations ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('installations', instAction)) {
         alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل التركيب/الخدمات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les installations/services, contactez l'administrateur.");
         return;
       }
@@ -405,7 +408,8 @@
 
     function addNote() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('notes')) {
+      const noteAction = editingItem.notes ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('notes', noteAction)) {
         alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل الملاحظات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les notes, contactez l'administrateur.");
         return;
       }
@@ -470,13 +474,15 @@
     setInterval(advanceRecurringItems, 60000);
 
     function deleteBtnHtml(col, id, t) {
-      return isCurrentUserAdmin() ? `<button class="btn-delete" onclick="deleteItem('${col}','${id}')">${t.delBtn}</button>` : '';
+      const canDelete = typeof hasSectionPermission === 'function' ? hasSectionPermission(col, 'delete') : isCurrentUserAdmin();
+      return canDelete ? `<button class="btn-delete" onclick="deleteItem('${col}','${id}')">${t.delBtn}</button>` : '';
     }
 
     function deleteItem(col, id) {
       if (!currentCompanyId) return;
-      if (!isCurrentUserAdmin()) {
-        alert(currentLang === 'ar' ? 'الحذف متاح فقط للمسؤول، تواصل معه.' : "La suppression est réservée à l'administrateur, contactez-le.");
+      const canDelete = typeof hasSectionPermission === 'function' ? hasSectionPermission(col, 'delete') : isCurrentUserAdmin();
+      if (!canDelete) {
+        alert(currentLang === 'ar' ? 'ماعندكش صلاحية الحذف فهاد القسم، تواصل مع المسؤول.' : "Vous n'avez pas la permission de supprimer dans cette section, contactez l'administrateur.");
         return;
       }
       if (confirm(currentLang === 'ar' ? "هل أنت متأكد من الحذف؟\nÊtes-vous sûr de vouloir supprimer ?" : "Êtes-vous sûr de vouloir supprimer ?\nهل أنت متأكد من الحذف؟")) { 
