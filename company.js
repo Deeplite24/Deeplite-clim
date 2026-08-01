@@ -335,6 +335,7 @@
           </label>`;
         const roleBadge = `<span class="emp-name-badge" style="background:${mIsAdmin ? 'rgba(56,189,248,0.16)' : 'rgba(148,163,184,0.16)'}; color:${mIsAdmin ? '#38bdf8' : '#94a3b8'};">${mIsAdmin ? (currentLang === 'ar' ? 'مسؤول' : 'Administrateur') : (currentLang === 'ar' ? 'عامل عادي' : 'Employé')}</span>`;
         const blockedBadge = blocked ? `<span class="emp-name-badge" style="background:rgba(248,113,113,0.16); color:#f87171;">${currentLang === 'ar' ? 'محظور' : 'Bloqué'}</span>` : '';
+        const chatBtn = `<button class="emp-btn" onclick="openPrivateChat('${m.id}')"><svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 6l9 7 9-7"/></svg>${currentLang === 'ar' ? 'دردشة خاصة' : 'Chat privé'}</button>`;
         const roleBtn = iAmAdmin ? `<button class="emp-btn" onclick="toggleAccessRole('${m.id}')">${mIsAdmin ? (currentLang === 'ar' ? 'تنزيل لعامل عادي' : 'Rétrograder') : (currentLang === 'ar' ? 'ترقية لمسؤول' : 'Promouvoir admin')}</button>` : '';
         const blockBtn = iAmAdmin ? `<button class="emp-btn ${blocked ? 'emp-danger' : ''}" onclick="toggleAccessBlock('${m.id}')">${blocked ? (currentLang === 'ar' ? 'فك الحظر' : 'Débloquer') : (currentLang === 'ar' ? 'حظر' : 'Bloquer')}</button>` : '';
         const removeBtn = iAmAdmin ? `<button class="emp-btn emp-danger" onclick="removeEmployeeFromCompany('${m.id}')">${currentLang === 'ar' ? 'إزالة نهائياً' : 'Retirer'}</button>` : '';
@@ -352,7 +353,7 @@
             ${permRow('installations', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> التركيب/الخدمات' : 'Installations')}
             ${permRow('notes', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4"/></svg> الملاحظات' : 'Notes')}
           </div>` : `<div style="font-size:11px; color:#94a3b8; margin:6px 0;">${currentLang === 'ar' ? 'المسؤول عندو كامل الصلاحيات تلقائياً.' : "L'administrateur a tous les droits automatiquement."}</div>`}
-          <div class="emp-actions">${roleBtn}${blockBtn}${removeBtn}</div>
+          <div class="emp-actions">${chatBtn}${roleBtn}${blockBtn}${removeBtn}</div>
         </div>`;
       }).join('');
     }

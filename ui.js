@@ -643,7 +643,7 @@
       document.getElementById('m-nts-t').innerHTML = t.mNtsT; document.getElementById('m-nts-d').innerHTML = t.mNtsD;
       document.getElementById('m-cht-t').innerHTML = t.mChtT; document.getElementById('m-cht-d').innerHTML = t.mChtD;
       document.getElementById('m-emp-t').innerHTML = t.mEmpT; document.getElementById('m-emp-d').innerHTML = t.mEmpD;
-      document.getElementById('emp-title-t').innerHTML = t.empTitleT; document.getElementById('emp-sub-t').innerHTML = t.empSubT;
+      safeSetHTML('emp-title-t', t.empTitleT); safeSetHTML('emp-sub-t', t.empSubT);
       renderEmployeesList();
       renderChequesListUI();
       renderStockListUI();
