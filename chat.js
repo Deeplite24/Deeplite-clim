@@ -253,9 +253,6 @@
         });
       }
 
-      const empBadge = document.getElementById('badge-employees');
-      const totalCount = others.length + (myCode ? (externalChatsCache.length + externalInvitesInCache.length + externalInvitesOutCache.length) : 0);
-      if (empBadge) empBadge.innerText = totalCount;
       box.innerHTML = html || `<div class="chat-empty">${t.pchatEmptyMembers}</div>`;
     }
 
@@ -968,8 +965,22 @@
       return arr.map((v, i) => ({ v, i })).sort((a, b) => {
         const ap = a.v.pendingEdit ? 1 : 0, bp = b.v.pendingEdit ? 1 : 0;
         if (ap !== bp) return ap - bp;
+        const apin = a.v.pinned ? 0 : 1, bpin = b.v.pinned ? 0 : 1;
+        if (apin !== bpin) return apin - bpin;
         return a.i - b.i;
       }).map(x => x.v);
+    }
+
+    function togglePinItem(col, id) {
+      if (!currentCompanyId) return;
+      const item = (globalData[col] || []).find(x => x.id === id);
+      if (!item) return;
+      db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update({ pinned: !item.pinned }).catch(() => {});
+    }
+
+    function pinBtnHtml(col, d) {
+      const isPinned = !!d.pinned;
+      return `<button class="btn-pin ${isPinned ? 'pinned' : ''}" onclick="togglePinItem('${col}','${d.id}')" title="${isPinned ? (currentLang === 'ar' ? 'إلغاء التثبيت' : 'Détacher') : (currentLang === 'ar' ? 'تثبيت فوق' : 'Épingler')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 17v5"/><path d="M9 4.5V10l-2 2.5v1.5h10V12.5L15 10V4.5"/><path d="M8.5 4.5h7"/></svg></button>`;
     }
 
     // ==================== تنسيق يدوي للتاريخ/الوقت/الأرقام ====================

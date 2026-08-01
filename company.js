@@ -258,7 +258,17 @@
       companyAccessUnsubscribe = db.collection('companies').doc(companyId).collection('access').onSnapshot(snap => {
         companyAccessCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderCompanyEmployeesList();
+        updateEmployeesBadge();
       }, err => console.error('startAccessListener error:', err));
+    }
+
+    // شارة عدد العمال (فبطاقة "العمال" فالصفحة الرئيسية) — كنعتمدو على عدد العمال الحقيقيين
+    // ديال الشركة (companyAccessCache) بلا احتساب راسي، عوض ما تبقى واقفة على 0 حتى تفتح شاشة الدردشة.
+    function updateEmployeesBadge() {
+      const empBadge = document.getElementById('badge-employees');
+      if (!empBadge) return;
+      const count = companyAccessCache.filter(m => m.id !== currentUid).length;
+      empBadge.innerText = count;
     }
 
     function memberPermissions(m) {
