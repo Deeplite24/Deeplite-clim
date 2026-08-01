@@ -881,6 +881,30 @@
       return pendingEditFallbackOpen(item.pendingEdit);
     }
 
+    function applyEditNow(col, id, data, name) {
+      const item = (globalData[col] || []).find(x => x.id === id);
+      const prevData = {};
+      if (item) {
+        Object.keys(data).forEach(k => { prevData[k] = item[k] !== undefined ? item[k] : null; });
+      }
+      const updates = Object.assign({}, data, {
+        previousData: prevData,
+        updatedAt: new Date().toISOString(),
+        updatedBy: name,
+        pendingEdit: firebase.firestore.FieldValue.delete()
+      });
+      db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update(updates).catch(showSaveError);
+    }
+
+    function sendEditForApproval(col, id, data, myId, name) {
+      db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update({
+        pendingEdit: { data, proposedBy: myId, proposedByName: name, proposedAt: new Date().toISOString() }
+      }).catch(showSaveError);
+    }
+
+    // ⚠️ إذا كان المسؤول (admin) هو لي كيعدل تعديل ديال عضو آخر، عندو الخيار: يبعث التعديل
+    // للموافقة (كيف عضو عادي) أو يطبقو مباشرة بلا ما يتسنى موافقة حد — لأنه هو صاحب القرار النهائي.
+    let editChoiceCtx = null;
     function submitPendingEdit(col, id, data) {
       if (!currentCompanyId) return;
       const myId = currentUid;
@@ -889,22 +913,34 @@
       const item = (globalData[col] || []).find(x => x.id === id);
       const isCreator = !item || !item.createdByDeviceId || item.createdByDeviceId === myId;
       if (isCreator) {
-        const prevData = {};
-        if (item) {
-          Object.keys(data).forEach(k => { prevData[k] = item[k] !== undefined ? item[k] : null; });
-        }
-        const updates = Object.assign({}, data, {
-          previousData: prevData,
-          updatedAt: new Date().toISOString(),
-          updatedBy: name,
-          pendingEdit: firebase.firestore.FieldValue.delete()
-        });
-        db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update(updates).catch(showSaveError);
+        applyEditNow(col, id, data, name);
+      } else if (isCurrentUserAdmin()) {
+        editChoiceCtx = { col, id, data, myId, name };
+        const modal = document.getElementById('edit-choice-modal');
+        if (modal) modal.classList.add('show');
+        else resolveEditChoice('approval'); // fallback إذا ماكانش المودال فالصفحة
       } else {
-        db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update({
-          pendingEdit: { data, proposedBy: myId, proposedByName: name, proposedAt: new Date().toISOString() }
-        }).catch(showSaveError);
+        sendEditForApproval(col, id, data, myId, name);
       }
+    }
+
+    function resolveEditChoice(mode) {
+      if (!editChoiceCtx) return;
+      const { col, id, data, myId, name } = editChoiceCtx;
+      if (mode === 'direct') {
+        applyEditNow(col, id, data, name);
+      } else {
+        sendEditForApproval(col, id, data, myId, name);
+      }
+      editChoiceCtx = null;
+      const modal = document.getElementById('edit-choice-modal');
+      if (modal) modal.classList.remove('show');
+    }
+
+    function closeEditChoiceModal() {
+      editChoiceCtx = null;
+      const modal = document.getElementById('edit-choice-modal');
+      if (modal) modal.classList.remove('show');
     }
 
     function approveEdit(col, id) {
