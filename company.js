@@ -95,11 +95,11 @@
         }
         const codeData = codeDoc.data();
         if (codeData.used) {
-          alert(currentLang === 'ar' ? 'هاد الكود تم استعماله من قبل!' : 'Ce code a déjà été utilisé !');
+          alert(currentLang === 'ar' ? 'هذا الكود سبق استخدامه من قبل!' : 'Ce code a déjà été utilisé !');
           return;
         }
         if (codeData.expiresAt && codeData.expiresAt.toDate() < new Date()) {
-          alert(currentLang === 'ar' ? 'انتهت صلاحية هاد الكود، اطلب واحد جديد من المسؤول.' : "Ce code a expiré, demandez-en un nouveau à l'administrateur.");
+          alert(currentLang === 'ar' ? 'انتهت صلاحية هذا الكود، يرجى طلب كود جديد من المسؤول.' : "Ce code a expiré, demandez-en un nouveau à l'administrateur.");
           return;
         }
         const companyId = codeData.companyId;
@@ -203,7 +203,7 @@
       const now = new Date();
       const valid = activeInviteCodesCache.filter(c => !c.expiresAt || c.expiresAt.toDate() > now);
       if (!valid.length) {
-        box.innerHTML = `<div style="font-size:11px; color:#94a3b8; text-align:center;">${currentLang === 'ar' ? 'ماكاين حتى كود نشيط دابا.' : 'Aucun code actif pour le moment.'}</div>`;
+        box.innerHTML = `<div style="font-size:11px; color:#94a3b8; text-align:center;">${currentLang === 'ar' ? 'لا يوجد أي كود نشط حالياً.' : 'Aucun code actif pour le moment.'}</div>`;
         return;
       }
       box.innerHTML = valid.map(c => {
@@ -220,7 +220,7 @@
 
     function revokeInviteCode(code) {
       if (currentUserRole !== 'admin' || !currentCompanyId) return;
-      if (!confirm(currentLang === 'ar' ? 'هل تريد إلغاء هذا الكود؟ ما غاديش يبقى صالح للاستعمال.' : 'Révoquer ce code ? Il ne pourra plus être utilisé.')) return;
+      if (!confirm(currentLang === 'ar' ? 'هل تريد إلغاء هذا الكود؟ لن يبقى صالحاً للاستخدام.' : 'Révoquer ce code ? Il ne pourra plus être utilisé.')) return;
       db.collection('inviteCodes').doc(code).delete().catch(err => {
         console.error('revokeInviteCode error:', err);
         alert(currentLang === 'ar' ? 'وقع خطأ فالإلغاء، حاول من جديد.' : "Une erreur s'est produite, réessayez.");
@@ -320,7 +320,7 @@
       }
       const newRole = isAdmin ? 'member' : 'admin';
       if (!confirm(currentLang === 'ar'
-        ? (isAdmin ? 'تنزيل هذا العامل من مسؤول إلى عامل عادي؟' : 'ترقية هذا العامل إلى مسؤول؟ غادي يحصل على كامل الصلاحيات وقدرة تسيير العمال.')
+        ? (isAdmin ? 'تنزيل هذا العامل من مسؤول إلى عامل عادي؟' : 'ترقية هذا العامل إلى مسؤول؟ سيحصل على كامل الصلاحيات وقدرة إدارة العمال.')
         : (isAdmin ? 'Rétrograder cet employé en "Employé" ?' : 'Promouvoir cet employé en "Administrateur" ? Il obtiendra tous les droits et la gestion des employés.'))) return;
       db.collection('companies').doc(currentCompanyId).collection('access').doc(uid).set({ role: newRole }, { merge: true }).catch(err => console.error('toggleAccessRole error:', err));
     }
@@ -333,7 +333,7 @@
         alert(currentLang === 'ar' ? 'خاص يبقى مسؤول واحد على الأقل فالشركة، ما يمكنش تزال.' : 'Il doit rester au moins un administrateur, impossible de le retirer.');
         return;
       }
-      if (!confirm(currentLang === 'ar' ? 'هل أنت متأكد من إزالة هذا العامل نهائياً من الشركة؟ غايفقد الوصول لكل معطيات الشركة، ويقدر يرجع غير بكود دعوة جديد.' : 'Retirer définitivement cet employé de la société ? Il perdra tout accès aux données et devra rejoindre à nouveau avec un nouveau code.')) return;
+      if (!confirm(currentLang === 'ar' ? 'هل أنت متأكد من إزالة هذا العامل نهائياً من الشركة؟ سيفقد الوصول إلى جميع بيانات الشركة، ولن يتمكن من العودة إلا بكود دعوة جديد.' : 'Retirer définitivement cet employé de la société ? Il perdra tout accès aux données et devra rejoindre à nouveau avec un nouveau code.')) return;
       db.collection('companies').doc(currentCompanyId).collection('access').doc(uid).delete().catch(err => {
         console.error('removeEmployeeFromCompany error:', err);
         alert(currentLang === 'ar' ? 'وقع خطأ فالإزالة، حاول من جديد.' : "Une erreur s'est produite, réessayez.");
@@ -347,7 +347,7 @@
       const others = companyAccessCache.filter(m => m.id !== currentUid);
 
       if (!others.length) {
-        box.innerHTML = `<div class="chat-empty">${currentLang === 'ar' ? 'ماكاين حتى عامل دخل بعد بكود الدعوة ديال الشركة.' : "Aucun employé n'a encore rejoint la société via un code d'invitation."}</div>`;
+        box.innerHTML = `<div class="chat-empty">${currentLang === 'ar' ? 'لا يوجد أي عامل انضم بعد بكود دعوة الشركة.' : "Aucun employé n'a encore rejoint la société via un code d'invitation."}</div>`;
         return;
       }
 
@@ -377,7 +377,7 @@
           <div class="emp-perm-section" style="margin:8px 0;">
             <div style="display:flex; align-items:center; gap:5px; font-size:12.5px; color:#e2e8f0; font-weight:600;">${label}</div>
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-inline-start:18px; margin-top:5px;">
-              <span style="font-size:11px; color:#94a3b8; margin-inline-end:2px;">${currentLang === 'ar' ? 'سماح ب:' : 'Autorisé pour :'}</span>
+              <span style="font-size:11px; color:#94a3b8; margin-inline-end:2px;">${currentLang === 'ar' ? 'مسموح بـ:' : 'Autorisé pour :'}</span>
               ${actionBtn(key, 'edit', p.edit)}
               ${actionBtn(key, 'delete', p.delete)}
               ${actionBtn(key, 'add', p.add)}
@@ -405,7 +405,7 @@
             ${permRow('stock', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/></svg> المخزون' : 'Stock')}
             ${permRow('installations', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> التركيب/الخدمات' : 'Installations')}
             ${permRow('notes', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4"/></svg> الملاحظات' : 'Notes')}
-          </div>` : `<div style="font-size:11px; color:#94a3b8; margin:6px 0;">${currentLang === 'ar' ? 'المسؤول عندو كامل الصلاحيات تلقائياً.' : "L'administrateur a tous les droits automatiquement."}</div>`}
+          </div>` : `<div style="font-size:11px; color:#94a3b8; margin:6px 0;">${currentLang === 'ar' ? 'المسؤول لديه كامل الصلاحيات تلقائياً.' : "L'administrateur a tous les droits automatiquement."}</div>`}
         </div>`;
       }).join('');
     }

@@ -339,7 +339,7 @@
       if (!currentUid) return;
       const chqAction = editingItem.cheques ? 'edit' : 'add';
       if (typeof hasSectionPermission === 'function' && !hasSectionPermission('cheques', chqAction)) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل الشيكات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les chèques, contactez l'administrateur.");
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل الشيكات، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les chèques, contactez l'administrateur.");
         return;
       }
       const num = document.getElementById('chk-num').value.trim();
@@ -362,7 +362,7 @@
       if (!currentUid) return;
       const stkAction = editingItem.stock ? 'edit' : 'add';
       if (typeof hasSectionPermission === 'function' && !hasSectionPermission('stock', stkAction)) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل المخزون، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier le stock, contactez l'administrateur.");
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل المخزون، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier le stock, contactez l'administrateur.");
         return;
       }
       const name = document.getElementById('item-name').value.trim();
@@ -385,7 +385,7 @@
       if (!currentUid) return;
       const instAction = editingItem.installations ? 'edit' : 'add';
       if (typeof hasSectionPermission === 'function' && !hasSectionPermission('installations', instAction)) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل التركيب/الخدمات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les installations/services, contactez l'administrateur.");
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل التركيب/الخدمات، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les installations/services, contactez l'administrateur.");
         return;
       }
       const client = document.getElementById('client-name').value.trim();
@@ -410,7 +410,7 @@
       if (!currentUid) return;
       const noteAction = editingItem.notes ? 'edit' : 'add';
       if (typeof hasSectionPermission === 'function' && !hasSectionPermission('notes', noteAction)) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل الملاحظات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les notes, contactez l'administrateur.");
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل الملاحظات، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les notes, contactez l'administrateur.");
         return;
       }
       const text = document.getElementById('note-text').value.trim();
@@ -508,7 +508,7 @@
         alert(currentLang === 'ar' ? 'هذا الإجراء متاح فقط للمسؤول.' : "Cette action est réservée à l'administrateur.");
         return;
       }
-      if (!confirm(currentLang === 'ar' ? 'هذا الإجراء غايصلح اسم "آخر تعديل" فالعناصر القديمة لي ماتعدلاتش بصح من بعد ما تزادو. متأكد؟' : 'Cette action va corriger le nom "dernière modification" des anciens éléments jamais réellement modifiés. Continuer ?')) return;
+      if (!confirm(currentLang === 'ar' ? 'سيقوم هذا الإجراء بتصحيح اسم "آخر تعديل" في العناصر القديمة التي لم يتم تعديلها فعلياً منذ إضافتها. هل أنت متأكد؟' : 'Cette action va corriger le nom "dernière modification" des anciens éléments jamais réellement modifiés. Continuer ?')) return;
 
       const collections = ['cheques', 'stock', 'installations', 'notes'];
       let fixedCount = 0;
@@ -537,7 +537,7 @@
       if (opsInBatch > 0) commits.push(batch.commit());
 
       if (fixedCount === 0) {
-        alert(currentLang === 'ar' ? 'ماكاين حتى عنصر محتاج إصلاح.' : 'Aucun élément à corriger.');
+        alert(currentLang === 'ar' ? 'لا يوجد أي عنصر بحاجة إلى تصحيح.' : 'Aucun élément à corriger.');
         return;
       }
       Promise.all(commits).then(() => {
