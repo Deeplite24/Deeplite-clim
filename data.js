@@ -484,6 +484,56 @@
       }
     }
 
+    // إصلاح لمرة وحدة: العناصر القديمة لي عندها updatedBy غالط (بسبب بگ قديم كان كيستعمل
+    // currentUserLabel() عوض اسم بروفايل الجهاز). كنصلح غير العناصر لي عمرها ماتعدلات
+    // بصح (الفرق بين وقت الإنشاء ووقت آخر تعديل صغير جداً)، باش ما نخربقش تعديلات حقيقية
+    // دارها شخص آخر من بعد الإنشاء.
+    function fixOldUpdatedByNames() {
+      if (!currentCompanyId) return;
+      if (!isCurrentUserAdmin()) {
+        alert(currentLang === 'ar' ? 'هذا الإجراء متاح فقط للمسؤول.' : "Cette action est réservée à l'administrateur.");
+        return;
+      }
+      if (!confirm(currentLang === 'ar' ? 'هذا الإجراء غايصلح اسم "آخر تعديل" فالعناصر القديمة لي ماتعدلاتش بصح من بعد ما تزادو. متأكد؟' : 'Cette action va corriger le nom "dernière modification" des anciens éléments jamais réellement modifiés. Continuer ?')) return;
+
+      const collections = ['cheques', 'stock', 'installations', 'notes'];
+      let fixedCount = 0;
+      let batch = db.batch();
+      let opsInBatch = 0;
+      const commits = [];
+
+      collections.forEach(col => {
+        (globalData[col] || []).forEach(d => {
+          if (!d.createdByName || !d.createdAt || typeof d.createdAt.toDate !== 'function' || !d.updatedAt) return;
+          if (d.updatedBy === d.createdByName) return; // مزيان ديجا
+          const createdMs = d.createdAt.toDate().getTime();
+          const updatedMs = new Date(d.updatedAt).getTime();
+          if (isNaN(updatedMs) || Math.abs(updatedMs - createdMs) > 60000) return; // فرق كبير = تعديل حقيقي، ما نمسوش
+          const ref = db.collection('companies').doc(currentCompanyId).collection(col).doc(d.id);
+          batch.update(ref, { updatedBy: d.createdByName });
+          fixedCount++;
+          opsInBatch++;
+          if (opsInBatch >= 400) { // حد Firestore لكل batch هو 500
+            commits.push(batch.commit());
+            batch = db.batch();
+            opsInBatch = 0;
+          }
+        });
+      });
+      if (opsInBatch > 0) commits.push(batch.commit());
+
+      if (fixedCount === 0) {
+        alert(currentLang === 'ar' ? 'ماكاين حتى عنصر محتاج إصلاح.' : 'Aucun élément à corriger.');
+        return;
+      }
+      Promise.all(commits).then(() => {
+        alert(currentLang === 'ar' ? `تم إصلاح ${fixedCount} عنصر بنجاح.` : `${fixedCount} élément(s) corrigé(s) avec succès.`);
+      }).catch(err => {
+        console.error('fixOldUpdatedByNames error:', err);
+        alert(currentLang === 'ar' ? 'وقع خطأ أثناء الإصلاح، حاول من جديد.' : "Une erreur s'est produite, réessayez.");
+      });
+    }
+
     function confirmAndDeleteEverything() {
       if (!currentCompanyId) return;
       if (!isCurrentUserAdmin()) {
