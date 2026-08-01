@@ -208,7 +208,7 @@
       }
       box.innerHTML = valid.map(c => {
         const expText = c.expiresAt ? formatDateTimeFull(new Date(c.expiresAt.toDate())) : '';
-        return `<div style="display:flex; align-items:center; justify-content:space-between; background:#0f172a; border:1px solid #334155; border-radius:10px; padding:8px 10px; margin-bottom:6px;">
+        return `<div class="invite-code-row" style="display:flex; align-items:center; justify-content:space-between; border:1px solid #334155; border-radius:10px; padding:8px 10px; margin-bottom:6px;">
           <div>
             <div style="font-size:15px; font-weight:800; letter-spacing:2px; color:#38bdf8;">${c.code}</div>
             <div style="font-size:10px; color:#94a3b8;">${currentLang === 'ar' ? 'صالح حتى:' : "Valide jusqu'au :"} ${expText}</div>
