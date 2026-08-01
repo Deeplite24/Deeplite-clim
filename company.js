@@ -234,7 +234,21 @@
     let companyAccessUnsubscribe = null;
 
     function defaultMemberPermissions() {
-      return { cheques: false, stock: false, installations: false, notes: false };
+      return {
+        cheques: { add: false, edit: false, delete: false },
+        stock: { add: false, edit: false, delete: false },
+        installations: { add: false, edit: false, delete: false },
+        notes: { add: false, edit: false, delete: false }
+      };
+    }
+
+    // كتحول قيمة قديمة (boolean وحدة لكامل القسم) أو جديدة (add/edit/delete) لنفس الشكل، باش نبقاو متوافقين مع البيانات القديمة
+    function normalizeSectionPerm(val) {
+      if (val && typeof val === 'object') {
+        return { add: !!val.add, edit: !!val.edit, delete: !!val.delete };
+      }
+      const legacy = !!val;
+      return { add: legacy, edit: legacy, delete: legacy };
     }
 
     function startAccessListener(companyId) {
@@ -248,28 +262,41 @@
     }
 
     function memberPermissions(m) {
-      if (!m) return defaultMemberPermissions();
-      if (m.role === 'admin') return { cheques: true, stock: true, installations: true, notes: true }; // الـadmin عندو كامل الصلاحيات ديما
-      return Object.assign(defaultMemberPermissions(), m.permissions || {});
+      const def = defaultMemberPermissions();
+      if (!m) return def;
+      if (m.role === 'admin') {
+        // الـadmin عندو كامل الصلاحيات ديما
+        const full = {};
+        Object.keys(def).forEach(section => { full[section] = { add: true, edit: true, delete: true }; });
+        return full;
+      }
+      const raw = m.permissions || {};
+      const out = {};
+      Object.keys(def).forEach(section => { out[section] = normalizeSectionPerm(raw[section]); });
+      return out;
     }
 
-    // كتخدم فأي بلاصة فالتطبيق باش نعرفو واش المستخدم الحالي عندو الحق يزيد/يعدل فقسم معين
-    function hasSectionPermission(section) {
+    // كتخدم فأي بلاصة فالتطبيق باش نعرفو واش المستخدم الحالي عندو الحق فقسم معين. action = 'add' | 'edit' | 'delete' (اختياري: بلا action كترجع true إلا كان عندو شي صلاحية فالقسم)
+    function hasSectionPermission(section, action) {
       if (isCurrentUserAdmin()) return true;
       if (!currentUid) return false;
       const me = companyAccessCache.find(x => x.id === currentUid);
       if (!me || me.blocked) return false;
-      return !!memberPermissions(me)[section];
+      const perms = memberPermissions(me)[section];
+      if (!perms) return false;
+      if (!action) return !!(perms.add || perms.edit || perms.delete);
+      return !!perms[action];
     }
 
-    function toggleMemberPermission(uid, section) {
+    function toggleMemberPermission(uid, section, action) {
       if (!isCurrentUserAdmin() || !currentCompanyId) return;
       const m = companyAccessCache.find(x => x.id === uid);
       if (!m || m.role === 'admin') return;
       const current = memberPermissions(m);
-      const newVal = !current[section];
+      const sectionPerms = Object.assign({}, current[section]);
+      sectionPerms[action] = !sectionPerms[action];
       db.collection('companies').doc(currentCompanyId).collection('access').doc(uid)
-        .set({ permissions: { [section]: newVal } }, { merge: true })
+        .set({ permissions: { [section]: sectionPerms } }, { merge: true })
         .catch(err => { console.error('toggleMemberPermission error:', err); });
     }
 
@@ -328,11 +355,35 @@
         const perms = memberPermissions(m);
         const mIsAdmin = m.role === 'admin';
         const blocked = !!m.blocked;
-        const permRow = (key, label) => `
-          <label class="emp-perm-toggle" style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:${perms[key] ? '#4ade80' : '#94a3b8'}; margin-inline-end:12px; ${iAmAdmin && !blocked ? 'cursor:pointer;' : 'opacity:0.6;'}">
-            <input type="checkbox" ${perms[key] ? 'checked' : ''} ${(iAmAdmin && !blocked) ? '' : 'disabled'} onchange="toggleMemberPermission('${m.id}','${key}')" style="width:15px; height:15px; accent-color:#22c55e;">
-            ${label}
-          </label>`;
+        const canToggle = iAmAdmin && !blocked;
+        // أيقونات الصلاحيات الفرعية (تعديل / مسح / إضافة). كل وحدة كتبان ملوّنة إلا كانت ممنوحة، ومطفية إلا لا.
+        const actionIcons = {
+          edit: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
+          delete: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V4.5h6V7M7 7l1 12.5h8L17 7"/></svg>',
+          add: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>'
+        };
+        const actionLabels = currentLang === 'ar'
+          ? { edit: 'تعديل', delete: 'مسح', add: 'إضافة' }
+          : { edit: 'Modifier', delete: 'Supprimer', add: 'Ajouter' };
+        const actionBtn = (section, action, active) => `
+          <button type="button" class="emp-perm-action-btn" title="${actionLabels[action]}"
+            ${canToggle ? `onclick="toggleMemberPermission('${m.id}','${section}','${action}')"` : 'disabled'}
+            style="display:inline-flex; align-items:center; gap:3px; font-size:11px; padding:3px 7px; border-radius:12px; border:1px solid ${active ? 'rgba(74,222,128,0.5)' : 'rgba(148,163,184,0.25)'}; background:${active ? 'rgba(74,222,128,0.16)' : 'rgba(148,163,184,0.08)'}; color:${active ? '#4ade80' : '#64748b'}; ${canToggle ? 'cursor:pointer;' : 'cursor:default; opacity:0.7;'}">
+            ${actionIcons[action]} ${actionLabels[action]}
+          </button>`;
+        const permRow = (key, label) => {
+          const p = perms[key] || { add: false, edit: false, delete: false };
+          return `
+          <div class="emp-perm-section" style="margin:8px 0;">
+            <div style="display:flex; align-items:center; gap:5px; font-size:12.5px; color:#e2e8f0; font-weight:600;">${label}</div>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-inline-start:18px; margin-top:5px;">
+              <span style="font-size:11px; color:#94a3b8; margin-inline-end:2px;">${currentLang === 'ar' ? 'سماح ب:' : 'Autorisé pour :'}</span>
+              ${actionBtn(key, 'edit', p.edit)}
+              ${actionBtn(key, 'delete', p.delete)}
+              ${actionBtn(key, 'add', p.add)}
+            </div>
+          </div>`;
+        };
         const roleBadge = `<span class="emp-name-badge" style="background:${mIsAdmin ? 'rgba(56,189,248,0.16)' : 'rgba(148,163,184,0.16)'}; color:${mIsAdmin ? '#38bdf8' : '#94a3b8'};">${mIsAdmin ? (currentLang === 'ar' ? 'مسؤول' : 'Administrateur') : (currentLang === 'ar' ? 'عامل عادي' : 'Employé')}</span>`;
         const blockedBadge = blocked ? `<span class="emp-name-badge" style="background:rgba(248,113,113,0.16); color:#f87171;">${currentLang === 'ar' ? 'محظور' : 'Bloqué'}</span>` : '';
         const iconBtnStyle = 'width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:none;cursor:pointer;flex-shrink:0;';
@@ -349,7 +400,7 @@
             </div>
             <div class="emp-icon-actions" style="display:flex; gap:6px;">${chatBtn}${roleBtn}${blockBtn}${removeBtn}</div>
           </div>
-          ${!mIsAdmin ? `<div class="emp-perms-row" style="margin:8px 0; display:flex; flex-wrap:wrap;">
+          ${!mIsAdmin ? `<div class="emp-perms-row" style="margin:8px 0; display:flex; flex-direction:column;">
             ${permRow('cheques', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg> الشيكات' : 'Chèques')}
             ${permRow('stock', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/></svg> المخزون' : 'Stock')}
             ${permRow('installations', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> التركيب/الخدمات' : 'Installations')}
