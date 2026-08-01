@@ -877,6 +877,7 @@
     function canActOnPendingEdit(item) {
       if (!item || !item.pendingEdit) return false;
       const myId = currentUid;
+      if (isCurrentUserAdmin()) return true; // المسؤول يقدر يوافق أو يرفض أي تعديل، حتى ولو ماشي هو صاحب العنصر
       if (!item.createdByDeviceId || item.createdByDeviceId === myId) return true;
       return pendingEditFallbackOpen(item.pendingEdit);
     }
