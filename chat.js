@@ -902,9 +902,9 @@
       }).catch(showSaveError);
     }
 
-    // ⚠️ إذا كان المسؤول (admin) هو لي كيعدل تعديل ديال عضو آخر، عندو الخيار: يبعث التعديل
-    // للموافقة (كيف عضو عادي) أو يطبقو مباشرة بلا ما يتسنى موافقة حد — لأنه هو صاحب القرار النهائي.
-    let editChoiceCtx = null;
+    // ⚠️ إذا كان المسؤول (admin) هو لي كيعدل تعديل ديال عضو آخر، التعديل يتطبق مباشرة أوتوماتيكيا
+    // (بلا ما يتسنى موافقة حد) — لأنه هو صاحب القرار النهائي فالشركة. نظام الموافقة (بانتظار/قبول/رفض)
+    // كيبقى خدام بلا تبديل بالنسبة للأعضاء العاديين.
     function submitPendingEdit(col, id, data) {
       if (!currentCompanyId) return;
       const myId = currentUid;
@@ -912,35 +912,11 @@
       const name = p ? deviceDisplayName(p) : currentUserLabel();
       const item = (globalData[col] || []).find(x => x.id === id);
       const isCreator = !item || !item.createdByDeviceId || item.createdByDeviceId === myId;
-      if (isCreator) {
-        applyEditNow(col, id, data, name);
-      } else if (isCurrentUserAdmin()) {
-        editChoiceCtx = { col, id, data, myId, name };
-        const modal = document.getElementById('edit-choice-modal');
-        if (modal) modal.classList.add('show');
-        else resolveEditChoice('approval'); // fallback إذا ماكانش المودال فالصفحة
-      } else {
-        sendEditForApproval(col, id, data, myId, name);
-      }
-    }
-
-    function resolveEditChoice(mode) {
-      if (!editChoiceCtx) return;
-      const { col, id, data, myId, name } = editChoiceCtx;
-      if (mode === 'direct') {
+      if (isCreator || isCurrentUserAdmin()) {
         applyEditNow(col, id, data, name);
       } else {
         sendEditForApproval(col, id, data, myId, name);
       }
-      editChoiceCtx = null;
-      const modal = document.getElementById('edit-choice-modal');
-      if (modal) modal.classList.remove('show');
-    }
-
-    function closeEditChoiceModal() {
-      editChoiceCtx = null;
-      const modal = document.getElementById('edit-choice-modal');
-      if (modal) modal.classList.remove('show');
     }
 
     function approveEdit(col, id) {

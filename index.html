@@ -198,19 +198,6 @@
     </div>
   </div>
 
-  <!-- ✏️ Edit Choice Modal (admin غير): تعديل عنصر أضافه عضو آخر — إرسال للموافقة أو تطبيق مباشر -->
-  <div id="edit-choice-modal" class="auth-error-overlay">
-    <div class="auth-error-box">
-      <h3 class="modal-title-text" style="font-size:17px; margin-bottom:8px;" id="edit-choice-title">كيفاش تريد تطبق هذا التعديل؟</h3>
-      <p style="font-size:13px; color:#94a3b8; margin:0 0 16px;" id="edit-choice-desc">هذا العنصر أضافه عضو آخر. تقدر تبعث التعديل ليه للموافقة، أو تطبقو مباشرة بصفتك مسؤول.</p>
-      <div class="auth-error-actions">
-        <button class="btn-error-forgot" onclick="resolveEditChoice('approval')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3a5 5 0 0 0-5 5v3.3L5.2 15h13.6L17 11.3V8a5 5 0 0 0-5-5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg> <span id="edit-choice-approval-t">إرسال للموافقة</span></button>
-        <button class="btn-error-register" style="background:#0f766e;" onclick="resolveEditChoice('direct')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg> <span id="edit-choice-direct-t">تعديل مباشر (بلا موافقة)</span></button>
-      </div>
-      <span class="btn-error-close" onclick="closeEditChoiceModal()" id="edit-choice-close-t">✕ إلغاء</span>
-    </div>
-  </div>
-
   <!-- 🏢 Company Invite Modal (admin غير): توليد كود دعوة لعامل جديد -->
   <div id="company-invite-modal" class="auth-error-overlay">
     <div class="auth-error-box">

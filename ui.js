@@ -503,9 +503,6 @@
         gsTitleT: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='3.2'/><path d='M12 3v2.4M12 18.6V21M4.2 12H6.6M17.4 12h2.4M6.3 6.3l1.7 1.7M16 16l1.7 1.7M17.7 6.3 16 8M8 16l-1.7 1.7'/></svg> إعدادات المجموعة", gsNameLbl: "اسم المجموعة:", gsMembersLbl: "الأعضاء الحاليون:", gsAddLbl: "أضف موظفاً من موظفيك:",
         gsCodeLbl: "رمز المجموعة (شاركه مع أي شخص ليتمكن من الدخول إليها مباشرة):", gsRegenBtn: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M20 12a8 8 0 1 1-2.9-6.2'/><path d='M20 4v5h-5'/></svg> رمز جديد", gsDeleteBtn: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M5 7h14M9 7V4.5h6V7M7 7l1 12.5h8L17 7'/></svg> حذف المجموعة",
         pendingEditFrom: "تعديل جديد من", pendingEditWaitingApproval: "بانتظار الموافقة", pendingWaitingOther: "بانتظار موافقة شخص آخر...",
-        editChoiceTitle: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M12 20h9'/><path d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z'/></svg> كيفاش تريد تطبق هذا التعديل؟",
-        editChoiceDesc: "هذا العنصر أضافه عضو آخر. تقدر تبعث التعديل ليه للموافقة، أو تطبقو مباشرة بصفتك مسؤول.",
-        editChoiceApprovalBtn: "إرسال للموافقة", editChoiceDirectBtn: "تعديل مباشر (بلا موافقة)", editChoiceClose: "✕ إلغاء",
         btnApprove: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='9'/><path d='M8 12.5l2.5 2.5 5.5-6'/></svg> قبول", btnReject: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='9'/><path d='M9 9l6 6M15 9l-6 6'/></svg> رفض", confirmReject: "رفض هذا التعديل؟",
         editApprovedFrom: "تعديل من",
         chkFormT: "تسجيل شيك جديد", chkNumPh: "رقم الشيك", chkOwnerPh: "صاحب الشيك / الشركة الموردة", chkAmountPh: "مبلغ الشيك (DH)",
@@ -558,9 +555,6 @@
         gsTitleT: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='3.2'/><path d='M12 3v2.4M12 18.6V21M4.2 12H6.6M17.4 12h2.4M6.3 6.3l1.7 1.7M16 16l1.7 1.7M17.7 6.3 16 8M8 16l-1.7 1.7'/></svg> Paramètres du groupe", gsNameLbl: "Nom du groupe :", gsMembersLbl: "Membres actuels :", gsAddLbl: "Ajouter un employé :",
         gsCodeLbl: "Code du groupe (partagez-le pour qu'une personne puisse le rejoindre directement) :", gsRegenBtn: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M20 12a8 8 0 1 1-2.9-6.2'/><path d='M20 4v5h-5'/></svg> Nouveau code", gsDeleteBtn: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M5 7h14M9 7V4.5h6V7M7 7l1 12.5h8L17 7'/></svg> Supprimer le groupe",
         pendingEditFrom: "Modification de", pendingEditWaitingApproval: "en attente d'approbation", pendingWaitingOther: "En attente de l'approbation d'un autre membre...",
-        editChoiceTitle: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M12 20h9'/><path d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z'/></svg> Comment voulez-vous appliquer cette modification ?",
-        editChoiceDesc: "Cet élément a été ajouté par un autre membre. Vous pouvez envoyer la modification pour approbation, ou l'appliquer directement en tant qu'administrateur.",
-        editChoiceApprovalBtn: "Envoyer pour approbation", editChoiceDirectBtn: "Modifier directement (sans approbation)", editChoiceClose: "✕ Annuler",
         btnApprove: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='9'/><path d='M8 12.5l2.5 2.5 5.5-6'/></svg> Approuver", btnReject: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='9'/><path d='M9 9l6 6M15 9l-6 6'/></svg> Rejeter", confirmReject: "Rejeter cette modification ?",
         editApprovedFrom: "Modification de",
         chkFormT: "Enregistrer un nouveau chèque", chkNumPh: "N° du chèque", chkOwnerPh: "Propriétaire / Fournisseur", chkAmountPh: "Montant (DH)",
@@ -671,12 +665,6 @@
       document.getElementById('member-info-call-t').innerHTML = t.memberInfoCall;
       document.getElementById('member-info-msg-t').innerHTML = t.mPchtT;
       document.getElementById('member-info-close-t').innerHTML = t.closeGeneric;
-
-      document.getElementById('edit-choice-title').innerHTML = t.editChoiceTitle;
-      document.getElementById('edit-choice-desc').innerHTML = t.editChoiceDesc;
-      document.getElementById('edit-choice-approval-t').innerHTML = t.editChoiceApprovalBtn;
-      document.getElementById('edit-choice-direct-t').innerHTML = t.editChoiceDirectBtn;
-      document.getElementById('edit-choice-close-t').innerHTML = t.editChoiceClose;
 
       document.getElementById('chk-form-t').innerHTML = t.chkFormT;
       document.getElementById('chk-num').placeholder = t.chkNumPh;
