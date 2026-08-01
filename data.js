@@ -351,7 +351,7 @@
         submitPendingEdit('cheques', editingItem.cheques, { num, owner, amount, type, date });
         cancelEditCheque();
       } else {
-        db.collection('companies').doc(currentCompanyId).collection('cheques').add({ num, owner, amount, type, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
+        db.collection('companies').doc(currentCompanyId).collection('cheques').add({ num, owner, amount, type, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()) }).then(() => {
           document.getElementById('chk-num').value = ''; document.getElementById('chk-owner').value = ''; document.getElementById('chk-amount').value = ''; document.getElementById('chk-type').selectedIndex = 0; document.getElementById('chk-date').value = '';
         }).catch(showSaveError);
       }
@@ -373,7 +373,7 @@
         submitPendingEdit('stock', editingItem.stock, { name, qty, price, minQty, date });
         cancelEditStock();
       } else {
-        db.collection('companies').doc(currentCompanyId).collection('stock').add({ name, qty, price, minQty, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
+        db.collection('companies').doc(currentCompanyId).collection('stock').add({ name, qty, price, minQty, date, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()) }).then(() => {
           document.getElementById('item-name').value = ''; document.getElementById('item-qty').value = ''; document.getElementById('item-price').value = ''; document.getElementById('item-minqty').value = ''; document.getElementById('item-date').value = '';
         }).catch(showSaveError);
       }
@@ -397,7 +397,7 @@
         submitPendingEdit('installations', editingItem.installations, { client, phone, map, clim, service, date, repeat });
         cancelEditInstallation();
       } else {
-        db.collection('companies').doc(currentCompanyId).collection('installations').add({ client, phone, map, clim, service, date, repeat, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
+        db.collection('companies').doc(currentCompanyId).collection('installations').add({ client, phone, map, clim, service, date, repeat, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()) }).then(() => {
           document.getElementById('client-name').value = ''; document.getElementById('client-phone').value = ''; document.getElementById('client-map').value = ''; document.getElementById('clim-type').value = ''; document.getElementById('service-type').selectedIndex = 0; document.getElementById('install-date').value = ''; safeSetVal('install-repeat', '');
         }).catch(showSaveError);
       }
@@ -417,7 +417,7 @@
         submitPendingEdit('notes', editingItem.notes, { text, datetime, repeat });
         cancelEditNote();
       } else {
-        db.collection('companies').doc(currentCompanyId).collection('notes').add({ text, datetime, repeat, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: currentUserLabel() }).then(() => {
+        db.collection('companies').doc(currentCompanyId).collection('notes').add({ text, datetime, repeat, createdByDeviceId: getDeviceId(), createdByName: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()), createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: new Date().toISOString(), updatedBy: (getDeviceProfile() ? deviceDisplayName(getDeviceProfile()) : currentUserLabel()) }).then(() => {
           document.getElementById('note-text').value = ''; document.getElementById('note-datetime').value = ''; safeSetVal('note-repeat', '');
         }).catch(showSaveError);
       }
