@@ -128,7 +128,7 @@
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('cheques', d)}
           ${renderPendingEditBox('cheques', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditCheque('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('cheques', d.id, t)}</span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;">${editBtnHtml('cheques', d.id)}${deleteBtnHtml('cheques', d.id, t)}</span></div>
         </div>`).join('');
       }
       updateNotificationBoxes();
@@ -163,7 +163,7 @@
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('stock', d)}
           ${renderPendingEditBox('stock', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditStock('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('stock', d.id, t)}</span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;">${editBtnHtml('stock', d.id)}${deleteBtnHtml('stock', d.id, t)}</span></div>
         </div>`;
         }).join('');
       }
@@ -203,7 +203,7 @@
           ${formatUpdateInfo(d)}
             ${renderPreviousValueBox('installations', d)}
             ${renderPendingEditBox('installations', d)}
-            <div class="item-actions">${mapButtonHtml}<span style="display:flex; gap:8px;"><button class="btn-map-link" onclick="printServiceCertificate('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg> ${currentLang === 'ar' ? 'طباعة شهادة' : 'Certificat'}</button><button class="btn-edit" onclick="startEditInstallation('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('installations', d.id, t)}</span></div>
+            <div class="item-actions">${mapButtonHtml}<span style="display:flex; gap:8px;"><button class="btn-map-link" onclick="printServiceCertificate('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg> ${currentLang === 'ar' ? 'طباعة شهادة' : 'Certificat'}</button>${editBtnHtml('installations', d.id)}${deleteBtnHtml('installations', d.id, t)}</span></div>
           </div>`;
         }).join('');
       }
@@ -235,7 +235,7 @@
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('notes', d)}
           ${renderPendingEditBox('notes', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditNote('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('notes', d.id, t)}</span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;">${editBtnHtml('notes', d.id)}${deleteBtnHtml('notes', d.id, t)}</span></div>
         </div>`).join('');
       }
       updateNotificationBoxes();
@@ -472,6 +472,14 @@
     }
 
     setInterval(advanceRecurringItems, 60000);
+
+    function editBtnHtml(col, id) {
+      const canEdit = typeof hasSectionPermission === 'function' ? hasSectionPermission(col, 'edit') : isCurrentUserAdmin();
+      if (!canEdit) return '';
+      const fnMap = { cheques: 'startEditCheque', stock: 'startEditStock', installations: 'startEditInstallation', notes: 'startEditNote' };
+      const fn = fnMap[col];
+      return `<button class="btn-edit" onclick="${fn}('${id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>`;
+    }
 
     function deleteBtnHtml(col, id, t) {
       const canDelete = typeof hasSectionPermission === 'function' ? hasSectionPermission(col, 'delete') : isCurrentUserAdmin();
