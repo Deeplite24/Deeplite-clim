@@ -7,13 +7,27 @@
     let groupMsgsUnsub = null;
     let groupMsgsCache = [];
 
+    // مجموعات مزادة قبل ما نزيدو allAuthorizedUids (لحماية الرسائل) ماعندهاش هاد الحقل بعد.
+    // كل مرة كنقراو المجموعات ديالنا، كنكملو الحقل الناقص تلقائياً باش تخدم رسائلها.
+    function backfillMissingAuthorizedUids(groups) {
+      groups.forEach(g => {
+        if (g.allAuthorizedUids) return;
+        const extUids = Object.values(g.externalMembers || {}).map(m => m.uid).filter(Boolean);
+        const all = Array.from(new Set([...(g.memberIds || []), ...extUids]));
+        db.collection('groups').doc(g.id).update({ allAuthorizedUids: all }).catch(() => {});
+      });
+    }
+
     function startGroupsListeners() {
       if (ownedGroupsUnsub) { ownedGroupsUnsub(); ownedGroupsUnsub = null; }
       if (externalGroupsUnsub) { externalGroupsUnsub(); externalGroupsUnsub = null; }
       ownedGroupsCache = []; externalGroupsCache = [];
       if (!currentUid) return;
-      ownedGroupsUnsub = db.collection('groups').where('ownerUid', '==', currentUid).onSnapshot(snap => {
+      // ⚠️ تصحيح: كنقراو بـ memberIds array-contains عوض ownerUid — باش كل عضو مزاد
+      // لمجموعة (ماشي غير خالقها) يقدر يشوفها ويوصل ليها.
+      ownedGroupsUnsub = db.collection('groups').where('memberIds', 'array-contains', currentUid).onSnapshot(snap => {
         ownedGroupsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        backfillMissingAuthorizedUids(ownedGroupsCache);
         renderGroupsList();
         updateChatUnreadBadge();
         updateBellNotifications();
@@ -22,6 +36,7 @@
       if (p && p.code) {
         externalGroupsUnsub = db.collection('groups').where('externalMemberCodes', 'array-contains', p.code).onSnapshot(snap => {
           externalGroupsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          backfillMissingAuthorizedUids(externalGroupsCache);
           renderGroupsList();
           updateChatUnreadBadge();
           updateBellNotifications();
@@ -42,9 +57,7 @@
     }
 
     function myVisibleGroups() {
-      const myId = currentUid;
-      const internal = ownedGroupsCache.filter(g => (g.memberIds || []).includes(myId));
-      return internal.concat(externalGroupsCache);
+      return ownedGroupsCache.concat(externalGroupsCache);
     }
 
     function findGroupById(id) {
@@ -52,7 +65,7 @@
     }
 
     function isGroupExternalForMe(g) {
-      return !!g && g.ownerUid !== currentUid;
+      return !!g && !((g.memberIds || []).includes(currentUid));
     }
 
     function myGroupSenderKey(g) {
@@ -126,6 +139,7 @@
           name,
           inviteCode: code,
           memberIds,
+          allAuthorizedUids: memberIds, // ⚠️ يجمع memberIds + أي عضو خارجي دخل بالكود لاحقاً — الـrules كتخدم بيه باش تحمي الرسائل
           externalMemberCodes: [],
           externalMembers: {},
           unread: {},
@@ -174,6 +188,7 @@
           const update = {
             externalMemberCodes: firebase.firestore.FieldValue.arrayUnion(myCode),
             ['externalMembers.' + myCode]: { uid: currentUid, deviceId: currentUid, name: deviceDisplayName(p), avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto },
+            allAuthorizedUids: firebase.firestore.FieldValue.arrayUnion(currentUid),
             ['unread.' + myCode]: 0
           };
           doc.ref.update(update).then(() => {
@@ -430,6 +445,7 @@
       if (!currentGroupId) return;
       db.collection('groups').doc(currentGroupId).update({
         memberIds: firebase.firestore.FieldValue.arrayUnion(memberId),
+        allAuthorizedUids: firebase.firestore.FieldValue.arrayUnion(memberId),
         ['unread.' + memberId]: 0
       }).then(() => {
         const g = findGroupById(currentGroupId);
@@ -440,20 +456,25 @@
     function removeGroupMember(key, isExternal) {
       if (!currentGroupId) return;
       if (!confirm(currentLang === 'ar' ? 'هل أنت متأكد من رغبتك في إزالة هذا العضو من المجموعة؟' : 'Retirer ce membre du groupe ?')) return;
+      const g = findGroupById(currentGroupId);
       if (isExternal) {
-        db.collection('groups').doc(currentGroupId).update({
+        const extUid = g && g.externalMembers && g.externalMembers[key] ? g.externalMembers[key].uid : null;
+        const update = {
           externalMemberCodes: firebase.firestore.FieldValue.arrayRemove(key),
           ['externalMembers.' + key]: firebase.firestore.FieldValue.delete()
-        }).then(() => {
-          const g = findGroupById(currentGroupId);
-          if (g) { g.externalMemberCodes = (g.externalMemberCodes || []).filter(c => c !== key); delete g.externalMembers[key]; renderGroupCurrentMembers(g); }
+        };
+        if (extUid) update.allAuthorizedUids = firebase.firestore.FieldValue.arrayRemove(extUid);
+        db.collection('groups').doc(currentGroupId).update(update).then(() => {
+          const g2 = findGroupById(currentGroupId);
+          if (g2) { g2.externalMemberCodes = (g2.externalMemberCodes || []).filter(c => c !== key); delete g2.externalMembers[key]; renderGroupCurrentMembers(g2); }
         });
       } else {
         db.collection('groups').doc(currentGroupId).update({
-          memberIds: firebase.firestore.FieldValue.arrayRemove(key)
+          memberIds: firebase.firestore.FieldValue.arrayRemove(key),
+          allAuthorizedUids: firebase.firestore.FieldValue.arrayRemove(key)
         }).then(() => {
-          const g = findGroupById(currentGroupId);
-          if (g) { g.memberIds = (g.memberIds || []).filter(id => id !== key); renderGroupCurrentMembers(g); renderGroupAddMembers(g); }
+          const g2 = findGroupById(currentGroupId);
+          if (g2) { g2.memberIds = (g2.memberIds || []).filter(id => id !== key); renderGroupCurrentMembers(g2); renderGroupAddMembers(g2); }
         });
       }
     }
@@ -476,8 +497,17 @@
       });
     }
 
+    function isGroupOwner(g) {
+      return !!g && g.ownerUid === currentUid;
+    }
+
     function deleteCurrentGroup() {
       if (!currentGroupId) return;
+      const g = findGroupById(currentGroupId);
+      if (!isGroupOwner(g)) {
+        alert(currentLang === 'ar' ? 'حذف المجموعة متاح فقط لمن أنشأها.' : "Seul le créateur du groupe peut le supprimer.");
+        return;
+      }
       if (!confirm(currentLang === 'ar' ? 'هل أنت متأكد من رغبتك في حذف هذه المجموعة نهائياً؟ لن تتمكن من استعادتها!' : 'Supprimer définitivement ce groupe ? Cette action est irréversible !')) return;
       const groupId = currentGroupId;
       db.collection('groups').doc(groupId).delete().then(() => {
