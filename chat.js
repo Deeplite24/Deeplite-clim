@@ -756,6 +756,19 @@
       });
       return list;
     }
+    // ⚠️ هاد الدالة كانت كتنداوى من computeMsgsBellTotal() (تحت) ومن openChatChoice() فـui.js، بصح
+    // ماكانتش معرّفة حتى فبلاصة (undefined) — كانت كتطيح بخطأ (ReferenceError) وتوقف updateMsgsNotifications()
+    // من البداية قبل ما توصل باش تحدث شارة الرسائل أو تعرض الرسائل الخاصة. هادشي هو السبب الحقيقي
+    // لي إشعارات الرسائل الخاصة عمرها ماكانت كتبان.
+    function computeGroupChatUnread() {
+      if (typeof myVisibleGroups !== 'function' || typeof myGroupSenderKey !== 'function') return 0;
+      return myVisibleGroups().reduce((sum, g) => {
+        const key = myGroupSenderKey(g);
+        const unread = (g.unread && key && g.unread[key]) || 0;
+        return sum + unread;
+      }, 0);
+    }
+
     function computeMsgsBellTotal() {
       return computeGroupChatUnread() + computeTotalPrivateUnread() + computeTotalExternalUnread() + computeExternalIncomingInvites() + computeNewGroupJoinNotifs().length;
     }
