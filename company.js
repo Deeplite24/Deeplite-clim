@@ -67,13 +67,14 @@
         renderAccountSwitcher();
         ensureDeviceProfile();
         startGroupsListeners();
-        // loadUserData() ولات كتشغل startMembersListener/startPrivateChatsListener من داخلها
+        startMembersListener(currentCompanyId);
+        startPrivateChatsListener(currentCompanyId);
         upsertMember();
         initExternalFeatures();
         if (typeof toggleAdminInviteButton === 'function') toggleAdminInviteButton();
       }).catch(err => {
         console.error('createCompany error:', err);
-        alert('DEBUG: ' + (err.code || '') + ' — ' + (err.message || err));
+        alert(currentLang === 'ar' ? 'وقع خطأ فخلق الشركة، حاول من جديد.' : "Une erreur s'est produite lors de la création de la société, réessayez.");
       });
     }
 
@@ -127,7 +128,8 @@
           renderAccountSwitcher();
           ensureDeviceProfile();
           startGroupsListeners();
-          // loadUserData() ولات كتشغل startMembersListener/startPrivateChatsListener من داخلها
+          startMembersListener(currentCompanyId);
+          startPrivateChatsListener(currentCompanyId);
           upsertMember();
           initExternalFeatures();
         }).catch(err => {
