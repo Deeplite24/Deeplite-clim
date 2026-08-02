@@ -31,7 +31,7 @@
         renderGroupsList();
         updateChatUnreadBadge();
         updateBellNotifications();
-      }, () => {});
+      }, err => console.error('[DeepliteClim] ownedGroups listener died:', err));
       const p = getDeviceProfile();
       if (p && p.code) {
         externalGroupsUnsub = db.collection('groups').where('externalMemberCodes', 'array-contains', p.code).onSnapshot(snap => {
@@ -40,7 +40,7 @@
           renderGroupsList();
           updateChatUnreadBadge();
           updateBellNotifications();
-        }, () => {});
+        }, err => console.error('[DeepliteClim] externalGroups listener died:', err));
       }
     }
 
@@ -52,7 +52,7 @@
           renderGroupsList();
           updateChatUnreadBadge();
           updateBellNotifications();
-        }, () => {});
+        }, err => console.error('[DeepliteClim] externalGroups listener died:', err));
       }
     }
 
@@ -279,7 +279,10 @@
       unreadUpdate.lastMessage = text;
       unreadUpdate.lastMessageAt = new Date().toISOString();
       db.collection('groups').doc(currentGroupId).collection('messages').add(msg).then(() => {
-        db.collection('groups').doc(currentGroupId).update(unreadUpdate).catch(() => {});
+        db.collection('groups').doc(currentGroupId).update(unreadUpdate).catch(err => {
+          console.error('[DeepliteClim] group unread update failed:', err);
+          showSaveError(err);
+        });
         input.value = '';
         scrollChatToBottom();
       });
@@ -353,14 +356,8 @@
       });
     }
 
-    function computeGroupChatUnread() {
-      const myId = currentUid;
-      const p = getDeviceProfile();
-      let total = 0;
-      ownedGroupsCache.forEach(g => { if ((g.memberIds || []).includes(myId)) total += (g.unread && g.unread[myId]) || 0; });
-      if (p && p.code) externalGroupsCache.forEach(g => { total += (g.unread && g.unread[p.code]) || 0; });
-      return total;
-    }
+    // ⚠️ ملاحظة: computeGroupChatUnread() ولات معرّفة فـchat.js (خاصها هاد الملف ماشي هنا)
+    // باش تخدم مزيان مع myVisibleGroups()/myGroupSenderKey() فكل الحالات (مجموعات ديالي + خارجية).
 
     function updateChatUnreadBadge() {
       const badge = document.getElementById('chat-unread-badge');
