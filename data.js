@@ -15,6 +15,8 @@
       dataLoading = { cheques: true, stock: true, installations: true, notes: true };
       renderNavShortcuts();
       if (typeof startAccessListener === 'function') startAccessListener(companyId); // قائمة عمال الشركة + الصلاحيات ديالهم
+      if (typeof startMembersListener === 'function') startMembersListener(companyId); // دليل الأعضاء (بحال الاسم الحالي، الحظر...)
+      if (typeof upsertMember === 'function') upsertMember(); // كنحدثو السمية الحالية فكل دخول، باش ما تبقاش سمية قديمة
       db.collection('companies').doc(companyId).collection('cheques').onSnapshot(snapshot => {
         dataLoading.cheques = false;
         if (snapshot.empty) {

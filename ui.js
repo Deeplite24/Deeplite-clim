@@ -646,6 +646,8 @@
       safeSetHTML('emp-title-t', t.empTitleT); safeSetHTML('emp-sub-t', t.empSubT);
       safeSetHTML('company-emp-title-t', t.companyEmpTitleT); safeSetHTML('company-emp-sub-t', t.companyEmpSubT);
       renderEmployeesList();
+      if (typeof renderCompanyEmployeesList === 'function') renderCompanyEmployeesList();
+      if (typeof renderActiveInviteCodes === 'function') renderActiveInviteCodes();
       renderChequesListUI();
       renderStockListUI();
       renderInstallationsListUI();

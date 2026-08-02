@@ -354,6 +354,10 @@
       const box = document.getElementById('company-employees-list');
       if (!box) return;
       const iAmAdmin = isCurrentUserAdmin();
+      if (!iAmAdmin) {
+        box.innerHTML = `<div class="chat-empty">${currentLang === 'ar' ? 'هذا القسم متاح فقط للمسؤول.' : "Cette section est réservée à l'administrateur."}</div>`;
+        return;
+      }
       const others = companyAccessCache.filter(m => m.id !== currentUid);
 
       if (!others.length) {

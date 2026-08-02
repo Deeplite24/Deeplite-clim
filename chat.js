@@ -2,14 +2,15 @@
     let teamMembersCache = [];
     let membersUnsubscribe = null;
 
-    // كنزيدو غير معلومات جانبية (أفاتار، هاتف) لوثيقة access الموجودة من قبل (تخلقات وقت
-    // خلق/انضمام الشركة)، بلا ما نبدلو الاسم ديالها (name) اللي تعمر من قبل
+    // كنزيدو معلومات جانبية (اسم، أفاتار، هاتف) لوثيقة access الموجودة من قبل، وكنبدلو الاسم
+    // (name) بالاسم الحالي فكل مرة — باش إلا بدل المستخدم سميتو، تتبدل فكامل الأماكن اللي كتبان فيها
+    // (لائحة الأعضاء، لائحة العمال ديال المسؤول...) عوض ما تبقى السمية القديمة ديال وقت الانضمام.
     function upsertMember() {
       if (!currentUid || !currentCompanyId) return;
       const p = getDeviceProfile();
       if (!p || (!p.firstName && !p.lastName)) return;
       db.collection('companies').doc(currentCompanyId).collection('access').doc(currentUid).set({
-        avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto, phone: p.phone || '',
+        name: deviceDisplayName(p), avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto, phone: p.phone || '',
         lastActive: new Date().toISOString()
       }, { merge: true }).catch(() => {});
     }
