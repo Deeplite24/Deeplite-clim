@@ -353,14 +353,8 @@
       });
     }
 
-    function computeGroupChatUnread() {
-      const myId = currentUid;
-      const p = getDeviceProfile();
-      let total = 0;
-      ownedGroupsCache.forEach(g => { if ((g.memberIds || []).includes(myId)) total += (g.unread && g.unread[myId]) || 0; });
-      if (p && p.code) externalGroupsCache.forEach(g => { total += (g.unread && g.unread[p.code]) || 0; });
-      return total;
-    }
+    // ⚠️ ملاحظة: computeGroupChatUnread() ولات معرّفة فـchat.js (خاصها هاد الملف ماشي هنا)
+    // باش تخدم مزيان مع myVisibleGroups()/myGroupSenderKey() فكل الحالات (مجموعات ديالي + خارجية).
 
     function updateChatUnreadBadge() {
       const badge = document.getElementById('chat-unread-badge');
