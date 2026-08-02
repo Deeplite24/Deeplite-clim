@@ -262,11 +262,13 @@
 
     function fromBellOpenPrivate(otherId) {
       document.getElementById('notif-center-box').classList.remove('show');
+      document.getElementById('msgs-center-box').classList.remove('show');
       openPrivateChat(otherId);
     }
 
     function fromBellOpenExternal(chatKey, otherCode) {
       document.getElementById('notif-center-box').classList.remove('show');
+      document.getElementById('msgs-center-box').classList.remove('show');
       openExternalChat(chatKey, otherCode);
     }
 
