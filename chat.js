@@ -27,98 +27,12 @@
       });
     }
 
-    // ==================== Private Chat (محادثة فردية بين عضوين من نفس الحساب) ====================
-    let privateChatsUnsubscribe = null;
-    let privateChatsCache = [];
-    let currentPrivateChatWith = null;
-    let privateMsgsUnsubscribe = null;
-    let privateMsgsCache = [];
+    // ==================== Private Chat ====================
+    // ⚠️ الميزات ديال الدردشة الخاصة (الحالة، الـlistener، الإرسال، العرض، الإشعارات)
+    // ولات فملف مستقل: private-chat.js — خاصو يتحمل فـindex.html من بعد هاد الملف
+    // (chat.js) باش يقدر يستعمل teamMembersCache/isMemberBlocked المعرّفين فوق.
 
-    function privateChatKey(idA, idB) { return [idA, idB].sort().join('__'); }
 
-    function startPrivateChatsListener(companyId) {
-      if (privateChatsUnsubscribe) { privateChatsUnsubscribe(); privateChatsUnsubscribe = null; }
-      privateChatsCache = [];
-      if (!companyId) return;
-      const myId = currentUid;
-      privateChatsUnsubscribe = db.collection('companies').doc(companyId).collection('privateChats')
-        .where('participants', 'array-contains', myId)
-        .onSnapshot(snap => {
-          privateChatsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          renderPrivateChatList();
-          updateBellNotifications();
-        });
-    }
-
-    function computeTotalPrivateUnread() {
-      const myId = currentUid;
-      return privateChatsCache.reduce((sum, c) => sum + ((c.unread && c.unread[myId]) || 0), 0);
-    }
-
-    function renderPrivateNotifRows() {
-      const myId = currentUid;
-      let rows = '';
-      privateChatsCache.forEach(c => {
-        const unread = (c.unread && c.unread[myId]) || 0;
-        if (unread > 0) {
-          const otherId = (c.participants || []).find(id => id !== myId);
-          const m = teamMembersCache.find(x => x.id === otherId);
-          const name = m ? deviceDisplayName(m) : (currentLang === 'ar' ? 'عضو' : 'Membre');
-          rows += `<div class="notif-row" onclick="fromBellOpenPrivate('${otherId}')">
-            <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 6l9 7 9-7"/></svg></span>
-            <span class="notif-row-text"><div class="notif-row-title">${name}</div><div class="notif-row-sub">${escapeChatText(c.lastMessage || '')}</div></span>
-            <span class="notif-row-badge">${unread > 9 ? '9+' : unread}</span>
-          </div>`;
-        }
-      });
-      return rows;
-    }
-
-    function renderPrivateChatList() {
-      const box = document.getElementById('pchat-members-list');
-      if (!box) return;
-      const t = translations[currentLang];
-      const myId = currentUid;
-      const others = teamMembersCache.filter(m => m.id !== myId);
-      if (!others.length) {
-        box.innerHTML = `<div class="chat-empty">${t.pchatEmptyMembers}</div>`;
-        return;
-      }
-      box.innerHTML = others.map(m => {
-        const key = privateChatKey(myId, m.id);
-        const conv = privateChatsCache.find(c => c.id === key);
-        const unread = conv && conv.unread ? (conv.unread[myId] || 0) : 0;
-        const preview = conv && conv.lastMessage ? escapeChatText(conv.lastMessage) : t.pchatStartHint;
-        const avatarHtml = m.avatarIsPhoto && m.avatar ? `<img src="${m.avatar}">` : (m.avatar || '🙂');
-        return `<div class="members-list-item" onclick="openPrivateChat('${m.id}')">
-          <div class="members-list-avatar">${avatarHtml}</div>
-          <div class="members-list-info"><div class="members-list-name">${deviceDisplayName(m)}</div><div class="members-list-preview">${preview}</div></div>
-          ${unread > 0 ? `<span class="members-list-badge">${unread > 9 ? '9+' : unread}</span>` : ''}
-        </div>`;
-      }).join('');
-    }
-
-    function openPrivateChat(otherId) {
-      const myId = currentUid;
-      const myself = teamMembersCache.find(x => x.id === myId);
-      if (isMemberBlocked(myself)) {
-        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> تم حظرك من الدردشة، تواصل مع المسؤول.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Vous avez été bloqué du chat, contactez le responsable.');
-        return;
-      }
-      const other = teamMembersCache.find(x => x.id === otherId);
-      if (isMemberBlocked(other)) {
-        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> هذا العضو محظور، قم بإلغاء حظره من "العمال" لتتمكن من مراسلته.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Ce membre est bloqué, débloquez-le depuis "Employés" pour lui écrire.');
-        return;
-      }
-      currentPrivateChatWith = otherId;
-      const m = teamMembersCache.find(x => x.id === otherId);
-      document.getElementById('pchat-header-name').innerText = m ? deviceDisplayName(m) : (currentLang === 'ar' ? 'عضو' : 'Membre');
-      document.getElementById('pchat-header-avatar').innerHTML = m && m.avatarIsPhoto && m.avatar ? `<img src="${m.avatar}">` : ((m && m.avatar) || '🙂');
-      openSection('pchat-section');
-      startPrivateMessagesListener(otherId);
-    }
-
-    // ==================== Employees Management (حظر / إضافة للدردشة الجماعية) ====================
     // ملاحظة توافق: الأعضاء اللي زادوا قبل هاد الميزة ماعندهمش حقل role — كنعتبروهم "مسؤول" باش
     // ماتوقفش عليهم الصلاحيات القديمة فجأة. غير role === 'member' الصريح هو لي كيقيد الصلاحيات.
     function memberIsAdmin(m) { return !m || m.role !== 'member'; }
@@ -260,125 +174,14 @@
       box.innerHTML = html || `<div class="chat-empty">${t.pchatEmptyMembers}</div>`;
     }
 
-    function fromBellOpenPrivate(otherId) {
-      document.getElementById('notif-center-box').classList.remove('show');
-      document.getElementById('msgs-center-box').classList.remove('show');
-      openPrivateChat(otherId);
-    }
-
     function fromBellOpenExternal(chatKey, otherCode) {
       document.getElementById('notif-center-box').classList.remove('show');
       document.getElementById('msgs-center-box').classList.remove('show');
       openExternalChat(chatKey, otherCode);
     }
 
-    function closePrivateChat() {
-      if (privateMsgsUnsubscribe) { privateMsgsUnsubscribe(); privateMsgsUnsubscribe = null; }
-      currentPrivateChatWith = null;
-      openSection('pchat-list-section');
-    }
-
-    function startPrivateMessagesListener(otherId) {
-      if (privateMsgsUnsubscribe) { privateMsgsUnsubscribe(); privateMsgsUnsubscribe = null; }
-      privateMsgsCache = [];
-      if (!currentUid) return;
-      const myId = currentUid;
-      const key = privateChatKey(myId, otherId);
-      privateMsgsUnsubscribe = db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key).collection('messages')
-        .orderBy('createdAt', 'asc')
-        .onSnapshot(snap => {
-          privateMsgsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          renderPrivateMessages();
-          scrollPrivateChatToBottom();
-          if (currentPrivateChatWith === otherId) markPrivateChatSeen(otherId);
-        });
-    }
-
-    function renderPrivateMessages() {
-      const box = document.getElementById('pchat-messages');
-      if (!box) return;
-      if (!privateMsgsCache.length) {
-        box.innerHTML = `<div class="chat-empty">${currentLang === 'ar' ? 'لا توجد رسائل بعد، ابدأ المحادثة!' : 'Aucun message, lancez la conversation !'}</div>`;
-        return;
-      }
-      const myId = currentUid;
-      box.innerHTML = privateMsgsCache.map(m => {
-        const mine = m.senderId === myId;
-        const avatarHtml = m.senderAvatarIsPhoto && m.senderAvatar ? `<img src="${m.senderAvatar}">` : (m.senderAvatar || '🙂');
-        let timeStr = '';
-        try {
-          if (m.createdAt && m.createdAt.toDate) timeStr = formatTimeShort(m.createdAt.toDate());
-        } catch (e) {}
-        return `
-          <div class="chat-msg-row ${mine ? 'mine' : ''}">
-            <div class="chat-avatar clickable" onclick="showMemberInfo('${m.senderId}')">${avatarHtml}</div>
-            <div class="chat-bubble-col">
-              <div class="chat-bubble">${escapeChatText(m.text || '')}</div>
-              <div class="chat-meta-row">${timeStr}</div>
-            </div>
-          </div>`;
-      }).join('');
-    }
-
-    function sendPrivateMessage() {
-      if (!currentUid || !currentPrivateChatWith) return;
-      const input = document.getElementById('pchat-input');
-      const text = input.value.trim();
-      if (!text) return;
-      const p = getDeviceProfile();
-      if (!p || (!p.firstName && !p.lastName)) { openDeviceProfileModal(true); return; }
-      const myId = currentUid;
-      const otherId = currentPrivateChatWith;
-      const myself = teamMembersCache.find(x => x.id === myId);
-      const other = teamMembersCache.find(x => x.id === otherId);
-      if (isMemberBlocked(myself) || isMemberBlocked(other)) {
-        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> هذه المحادثة محظورة، لا يمكنك إرسال رسائل.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cette conversation est bloquée, envoi impossible.');
-        return;
-      }
-      const key = privateChatKey(myId, otherId);
-      const parentRef = db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key);
-      const msg = {
-        text, senderId: myId, senderName: deviceDisplayName(p),
-        senderAvatar: p.avatar || '', senderAvatarIsPhoto: !!p.avatarIsPhoto,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
-      parentRef.collection('messages').add(msg).then(() => {
-        const update = {
-          participants: firebase.firestore.FieldValue.arrayUnion(myId, otherId),
-          lastMessage: text,
-          lastMessageAt: new Date().toISOString(),
-          lastSenderId: myId
-        };
-        update['unread.' + otherId] = firebase.firestore.FieldValue.increment(1);
-        update['unread.' + myId] = 0;
-        // ⚠️ زدنا .catch هنا: هاد التحديث (unread/participants/lastMessage) كان بلا أي معالجة خطأ —
-        // إلا رفضتو قواعد الأمان (Firestore Rules) أو أي مشكل آخر، كان كيفشل بصمت (الرسالة نفسها
-        // كتبقى توصل حيت هي كتابة منفصلة فـmessages)، والشارة/الإشعار عمرهم ما يتحدثو بلا ما يبان أي خطأ.
-        parentRef.set(update, { merge: true }).catch(err => {
-          console.error('sendPrivateMessage unread update error:', err);
-          showSaveError(err);
-        });
-        input.value = '';
-        scrollPrivateChatToBottom();
-      }).catch(err => {
-        console.error('sendPrivateMessage error:', err);
-        showSaveError(err);
-      });
-    }
-
-    function markPrivateChatSeen(otherId) {
-      if (!currentUid) return;
-      const myId = currentUid;
-      const key = privateChatKey(myId, otherId);
-      const update = {};
-      update['unread.' + myId] = 0;
-      db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key).set(update, { merge: true }).catch(() => {});
-    }
-
-    function scrollPrivateChatToBottom() {
-      const box = document.getElementById('pchat-messages');
-      if (box) box.scrollTop = box.scrollHeight;
-    }
+    // fromBellOpenPrivate, closePrivateChat, startPrivateMessagesListener, renderPrivateMessages,
+    // sendPrivateMessage, markPrivateChatSeen, scrollPrivateChatToBottom → ولات فـprivate-chat.js
 
     // ==================== Chat by Code (تواصل مع ناس من حسابات أخرى عن طريق كود مميز) ====================
     let externalInvitesUnsubIn = null, externalInvitesUnsubOut = null;
