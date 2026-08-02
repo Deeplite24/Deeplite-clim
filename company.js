@@ -67,8 +67,7 @@
         renderAccountSwitcher();
         ensureDeviceProfile();
         startGroupsListeners();
-        startMembersListener(currentCompanyId);
-        startPrivateChatsListener(currentCompanyId);
+        // loadUserData() ولات كتشغل startMembersListener/startPrivateChatsListener من داخلها
         upsertMember();
         initExternalFeatures();
         if (typeof toggleAdminInviteButton === 'function') toggleAdminInviteButton();
@@ -128,8 +127,7 @@
           renderAccountSwitcher();
           ensureDeviceProfile();
           startGroupsListeners();
-          startMembersListener(currentCompanyId);
-          startPrivateChatsListener(currentCompanyId);
+          // loadUserData() ولات كتشغل startMembersListener/startPrivateChatsListener من داخلها
           upsertMember();
           initExternalFeatures();
         }).catch(err => {

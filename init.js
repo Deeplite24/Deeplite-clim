@@ -30,8 +30,11 @@
           renderAccountSwitcher();
           ensureDeviceProfile();
           startGroupsListeners();
-          startMembersListener(currentCompanyId);
-          startPrivateChatsListener(currentCompanyId);
+          // ⚠️ ماشي هنا startMembersListener/startPrivateChatsListener — loadUserData() (فـdata.js)
+          // ولات كتديرهم من داخلها فكل تسجيل دخول. كان عندنا نداء مكرر هنا (مرتين فنفس اللحظة:
+          // مرة من loadUserData ومرة هنا) كيخلق listener ويهدمو مباشرة قبل ما يوصل أول نتيجة —
+          // هو السبب لي إشعارات الرسائل الخاصة كانت خاصرة أحياناً بخلاف الكروبات (startGroupsListeners
+          // كتنداوى مرة وحدة غير).
           upsertMember();
           initExternalFeatures();
           if (typeof toggleAdminInviteButton === 'function') toggleAdminInviteButton();
