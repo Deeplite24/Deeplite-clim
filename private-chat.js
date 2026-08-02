@@ -30,7 +30,8 @@
           privateChatsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderPrivateChatList();
           updateBellNotifications();
-        });
+          if (typeof updateChatUnreadBadge === 'function') updateChatUnreadBadge();
+        }, err => console.error('[DeepliteClim] privateChats listener died:', err));
     }
 
     function computeTotalPrivateUnread() {

@@ -29,8 +29,8 @@
         ownedGroupsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         backfillMissingAuthorizedUids(ownedGroupsCache);
         renderGroupsList();
-        updateChatUnreadBadge();
         updateBellNotifications();
+        updateChatUnreadBadge();
         __directGroupDebugUpdate();
       }, err => console.error('[DeepliteClim] ownedGroups listener died:', err));
       const p = getDeviceProfile();
@@ -39,8 +39,8 @@
           externalGroupsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           backfillMissingAuthorizedUids(externalGroupsCache);
           renderGroupsList();
-          updateChatUnreadBadge();
           updateBellNotifications();
+          updateChatUnreadBadge();
           __directGroupDebugUpdate();
         }, err => console.error('[DeepliteClim] externalGroups listener died:', err));
       }
@@ -71,8 +71,8 @@
         externalGroupsUnsub = db.collection('groups').where('externalMemberCodes', 'array-contains', p.code).onSnapshot(snap => {
           externalGroupsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderGroupsList();
-          updateChatUnreadBadge();
           updateBellNotifications();
+          updateChatUnreadBadge();
         }, err => console.error('[DeepliteClim] externalGroups listener died:', err));
       }
     }
@@ -381,13 +381,19 @@
     function updateChatUnreadBadge() {
       const badge = document.getElementById('chat-unread-badge');
       const homeBadge = document.getElementById('badge-chat');
+      const topBadge = document.getElementById('msgs-badge');
       const unread = computeGroupChatUnread() + computeTotalPrivateUnread();
       if (unread > 0) {
         if (badge) { badge.innerText = unread > 9 ? '9+' : String(unread); badge.style.display = 'flex'; }
         if (homeBadge) { homeBadge.innerText = unread > 9 ? '9+' : String(unread); homeBadge.style.display = 'flex'; }
+        // ⚠️ تحديث مباشر وبسيط لنفس الشارة الفوقانية (msgs-badge)، بنفس الطريقة المباشرة
+        // اللي كتخدم بيها badge-chat — بلا ما تعدي عبر السلسلة الطويلة ديال
+        // updateBellNotifications/computeMsgsBellTotal اللي كانت كتخيب أحيانا.
+        if (topBadge) { topBadge.innerText = unread > 9 ? '9+' : String(unread); topBadge.style.display = 'flex'; }
       } else {
         if (badge) badge.style.display = 'none';
         if (homeBadge) homeBadge.style.display = 'none';
+        if (topBadge) topBadge.style.display = 'none';
       }
     }
 
