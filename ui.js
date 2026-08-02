@@ -1074,7 +1074,7 @@
           content.innerHTML += `<div class="alert-sub-item" style="cursor:pointer;" onclick="goToItem('installations','${d.id}')"><span>🛠️ ${d.client}</span><b>${d.service}</b></div>`;
         });
         globalData.notes.forEach(d => {
-          content.innerHTML += `<div class="alert-sub-item" style="cursor:pointer;" onclick="goToItem('notes','${d.id}')"><span style="white-space: pre-wrap;"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="3" width="14" height="18" rx="1.4"/><line x1="7" y1="8" x2="14" y2="8"/><line x1="7" y1="12" x2="11.5" y2="12"/></svg> ${d.text}</span></div>`;
+          content.innerHTML += `<div class="alert-sub-item"><span style="white-space: pre-wrap;"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="3" width="14" height="18" rx="1.4"/><line x1="7" y1="8" x2="14" y2="8"/><line x1="7" y1="12" x2="11.5" y2="12"/></svg> ${d.text}</span></div>`;
         });
       }
 
