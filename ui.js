@@ -490,7 +490,7 @@
         mSrvT: "الخدمات والزبائن", mSrvD: "تركيب، تنظيف، إصلاح",
         mNtsT: "الملاحظات", mNtsD: "كناش الملاحظات والمهام",
         mChtT: "دردشة", mChtD: "جماعية أو خاصة بين الأعضاء",
-        mEmpT: "العمال", mEmpD: "إضافة، دردشة خاصة، حظر", empTitleT: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='8' r='3.6'/><path d='M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7'/><path d='M6.5 8.5c1.5-1 3.6-1.6 5.5-1.6s4 .6 5.5 1.6' stroke-width='1.4'/></svg> العمال", empSubT: "يظهر هنا تلقائياً كل عامل لديه حساب في هذا التطبيق. يمكنك مراسلته بشكل خاص، أو إضافته إلى الدردشة الجماعية، أو حظره.", companyEmpTitleT: "عمال الشركة (الذين انضموا بكود الدعوة)", companyEmpSubT: "هنا ترى كل عامل انضم إلى الشركة بكود الدعوة، ويمكنك منحه صلاحية الإضافة أو التعديل في: الشيكات، المخزون، التركيب/الخدمات، أو الملاحظات.",
+        mEmpT: "العمال", mEmpD: "إضافة، دردشة خاصة، حظر", empTitleT: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='8' r='3.6'/><path d='M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7'/><path d='M6.5 8.5c1.5-1 3.6-1.6 5.5-1.6s4 .6 5.5 1.6' stroke-width='1.4'/></svg> العمال", empSubT: "يظهر هنا تلقائياً كل عامل لديه حساب في هذا التطبيق. يمكنك مراسلته بشكل خاص، أو إضافته إلى الدردشة الجماعية، أو حظره.",
         mPchtT: "دردشة خاصة", mPchtD: "محادثات فردية بين الأعضاء",
         chatChoiceTitle: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M4 5h16v10.5H10.5L6 19v-3.5H4z'/></svg> اختر نوع الدردشة", chatChoiceGroup: "دردشة جماعية", chatChoicePrivate: "دردشة خاصة", chatChoiceCode: "إضافة عامل", closeGeneric: "✕ إغلاق", memberInfoCall: "اتصال",
         exchtListT: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='9'/><line x1='12' y1='8' x2='12' y2='16'/><line x1='8' y1='12' x2='16' y2='12'/></svg> إضافة عامل", exchtSub: "أضف عاملاً عبر بريده الإلكتروني أو اسم المستخدم (الرمز) لإضافته إلى دردشة الفريق.", exchtMyCodeLbl: "اسم المستخدم الخاص بك (شاركه مع المسؤول):", exchtCodeInputPh: "البريد الإلكتروني أو اسم مستخدم العامل...",
@@ -503,8 +503,6 @@
         gsTitleT: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='3.2'/><path d='M12 3v2.4M12 18.6V21M4.2 12H6.6M17.4 12h2.4M6.3 6.3l1.7 1.7M16 16l1.7 1.7M17.7 6.3 16 8M8 16l-1.7 1.7'/></svg> إعدادات المجموعة", gsNameLbl: "اسم المجموعة:", gsMembersLbl: "الأعضاء الحاليون:", gsAddLbl: "أضف موظفاً من موظفيك:",
         gsCodeLbl: "رمز المجموعة (شاركه مع أي شخص ليتمكن من الدخول إليها مباشرة):", gsRegenBtn: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M20 12a8 8 0 1 1-2.9-6.2'/><path d='M20 4v5h-5'/></svg> رمز جديد", gsDeleteBtn: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M5 7h14M9 7V4.5h6V7M7 7l1 12.5h8L17 7'/></svg> حذف المجموعة",
         pendingEditFrom: "تعديل جديد من", pendingEditWaitingApproval: "بانتظار الموافقة", pendingWaitingOther: "بانتظار موافقة شخص آخر...",
-        ciTitle: "دعوة عامل جديد", ciCodeLbl: "كود الدعوة (صالح لاستعمال واحد، لمدة ساعتين):", ciRegenBtn: "كود جديد",
-        ciActiveCodesLbl: "الأكواد النشيطة (لم تُستخدم بعد):", ciCloseT: "✕ إغلاق",
         btnApprove: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='9'/><path d='M8 12.5l2.5 2.5 5.5-6'/></svg> قبول", btnReject: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='9'/><path d='M9 9l6 6M15 9l-6 6'/></svg> رفض", confirmReject: "رفض هذا التعديل؟",
         editApprovedFrom: "تعديل من",
         chkFormT: "تسجيل شيك جديد", chkNumPh: "رقم الشيك", chkOwnerPh: "صاحب الشيك / الشركة الموردة", chkAmountPh: "مبلغ الشيك (DH)",
@@ -544,7 +542,7 @@
         mSrvT: "Services & Clients", mSrvD: "Installation, nettoyage, réparation",
         mNtsT: "Notes", mNtsD: "Carnet de notes et tâches",
         mChtT: "Chat", mChtD: "Groupe ou privé entre membres",
-        mEmpT: "Employés", mEmpD: "Ajouter, chat privé, bloquer", empTitleT: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='8' r='3.6'/><path d='M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7'/><path d='M6.5 8.5c1.5-1 3.6-1.6 5.5-1.6s4 .6 5.5 1.6' stroke-width='1.4'/></svg> Employés", empSubT: "Chaque employé ayant un compte sur cette appli apparaît ici automatiquement. Vous pouvez lui écrire en privé, l'ajouter au groupe, ou le bloquer.", companyEmpTitleT: "Employés de l'entreprise (ayant rejoint avec un code)", companyEmpSubT: "Vous voyez ici chaque employé ayant rejoint l'entreprise avec un code d'invitation, et pouvez lui donner la permission d'ajouter ou modifier : les chèques, le stock, les installations/services, ou les notes.",
+        mEmpT: "Employés", mEmpD: "Ajouter, chat privé, bloquer", empTitleT: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='8' r='3.6'/><path d='M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7'/><path d='M6.5 8.5c1.5-1 3.6-1.6 5.5-1.6s4 .6 5.5 1.6' stroke-width='1.4'/></svg> Employés", empSubT: "Chaque employé ayant un compte sur cette appli apparaît ici automatiquement. Vous pouvez lui écrire en privé, l'ajouter au groupe, ou le bloquer.",
         mPchtT: "Chat privé", mPchtD: "Conversations individuelles entre membres",
         chatChoiceTitle: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M4 5h16v10.5H10.5L6 19v-3.5H4z'/></svg> Choisissez le type de chat", chatChoiceGroup: "Chat de groupe", chatChoicePrivate: "Chat privé", chatChoiceCode: "Ajouter un employé", closeGeneric: "✕ Fermer", memberInfoCall: "Appeler",
         exchtListT: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='9'/><line x1='12' y1='8' x2='12' y2='16'/><line x1='8' y1='12' x2='16' y2='12'/></svg> Ajouter un employé", exchtSub: "Ajoutez un employé par son e-mail ou son nom d'utilisateur (code) pour l'ajouter au chat de l'équipe.", exchtMyCodeLbl: "Votre nom d'utilisateur (à partager avec le responsable) :", exchtCodeInputPh: "E-mail ou nom d'utilisateur de l'employé...",
@@ -557,8 +555,6 @@
         gsTitleT: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='3.2'/><path d='M12 3v2.4M12 18.6V21M4.2 12H6.6M17.4 12h2.4M6.3 6.3l1.7 1.7M16 16l1.7 1.7M17.7 6.3 16 8M8 16l-1.7 1.7'/></svg> Paramètres du groupe", gsNameLbl: "Nom du groupe :", gsMembersLbl: "Membres actuels :", gsAddLbl: "Ajouter un employé :",
         gsCodeLbl: "Code du groupe (partagez-le pour qu'une personne puisse le rejoindre directement) :", gsRegenBtn: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M20 12a8 8 0 1 1-2.9-6.2'/><path d='M20 4v5h-5'/></svg> Nouveau code", gsDeleteBtn: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><path d='M5 7h14M9 7V4.5h6V7M7 7l1 12.5h8L17 7'/></svg> Supprimer le groupe",
         pendingEditFrom: "Modification de", pendingEditWaitingApproval: "en attente d'approbation", pendingWaitingOther: "En attente de l'approbation d'un autre membre...",
-        ciTitle: "Inviter un nouvel employé", ciCodeLbl: "Code d'invitation (valable pour un usage, pendant 2 heures) :", ciRegenBtn: "Nouveau code",
-        ciActiveCodesLbl: "Codes actifs (pas encore utilisés) :", ciCloseT: "✕ Fermer",
         btnApprove: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='9'/><path d='M8 12.5l2.5 2.5 5.5-6'/></svg> Approuver", btnReject: "<svg viewBox='0 0 24 24' width='15' height='15' style='vertical-align:-3px;margin-inline-end:3px' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ><circle cx='12' cy='12' r='9'/><path d='M9 9l6 6M15 9l-6 6'/></svg> Rejeter", confirmReject: "Rejeter cette modification ?",
         editApprovedFrom: "Modification de",
         chkFormT: "Enregistrer un nouveau chèque", chkNumPh: "N° du chèque", chkOwnerPh: "Propriétaire / Fournisseur", chkAmountPh: "Montant (DH)",
@@ -648,13 +644,7 @@
       document.getElementById('m-cht-t').innerHTML = t.mChtT; document.getElementById('m-cht-d').innerHTML = t.mChtD;
       document.getElementById('m-emp-t').innerHTML = t.mEmpT; document.getElementById('m-emp-d').innerHTML = t.mEmpD;
       safeSetHTML('emp-title-t', t.empTitleT); safeSetHTML('emp-sub-t', t.empSubT);
-      safeSetHTML('company-emp-title-t', t.companyEmpTitleT); safeSetHTML('company-emp-sub-t', t.companyEmpSubT);
       renderEmployeesList();
-      if (typeof renderCompanyEmployeesList === 'function') renderCompanyEmployeesList();
-      if (typeof renderActiveInviteCodes === 'function') renderActiveInviteCodes();
-      safeSetHTML('ci-title', t.ciTitle); safeSetHTML('ci-code-lbl', t.ciCodeLbl);
-      safeSetHTML('ci-regen-btn', t.ciRegenBtn); safeSetHTML('ci-active-codes-lbl', t.ciActiveCodesLbl);
-      safeSetHTML('ci-close-t', t.ciCloseT);
       renderChequesListUI();
       renderStockListUI();
       renderInstallationsListUI();
@@ -664,9 +654,7 @@
       document.getElementById('chat-choice-title').innerHTML = t.chatChoiceTitle;
       document.getElementById('chat-choice-group-t').innerHTML = t.chatChoiceGroup;
       document.getElementById('chat-choice-private-t').innerHTML = t.chatChoicePrivate;
-      // ⚠️ ملاحظة: زر "chat-choice-code-t" تحيد من الواجهة (استبدل بـ"+ إضافة بالكود" فشاشة
-      // الرسائل الخاصة)، فحذفنا هاد السطر لي كان كيخرب applyLanguage كاملة (كل شي بعدو
-      // ما كانش كيترجم) لأن document.getElementById كان يرجع null ويوقف الدالة بالخطأ.
+      document.getElementById('chat-choice-code-t').innerHTML = t.chatChoiceCode;
       document.getElementById('chat-choice-close-t').innerHTML = t.closeGeneric;
       document.getElementById('excht-list-title-t').innerHTML = t.exchtListT;
       document.getElementById('excht-sub-t').innerHTML = t.exchtSub;
@@ -758,12 +746,12 @@
       document.getElementById('notif-lead-opt-180').innerHTML = t.notifLeadOpt180;
       document.getElementById('notif-lead-opt-1440').innerHTML = t.notifLeadOpt1440;
 
-      safeSetHTML('nav-lbl-1', t.nav1);
-      safeSetHTML('nav-lbl-2', t.nav2);
-      safeSetHTML('nav-lbl-3', t.nav3);
-      safeSetHTML('nav-lbl-4', t.nav4);
-      safeSetHTML('nav-lbl-5', t.nav5);
-      safeSetHTML('nav-lbl-6', t.nav6);
+      document.getElementById('nav-lbl-1').innerHTML = t.nav1;
+      document.getElementById('nav-lbl-2').innerHTML = t.nav2;
+      document.getElementById('nav-lbl-3').innerHTML = t.nav3;
+      document.getElementById('nav-lbl-4').innerHTML = t.nav4;
+      document.getElementById('nav-lbl-5').innerHTML = t.nav5;
+      document.getElementById('nav-lbl-6').innerHTML = t.nav6;
       document.getElementById('sp-title-t').innerHTML = (currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> أضف اختصارًا إلى الشريط السفلي ' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Ajouter un raccourci ') + `<span style="font-size:12px; cursor:pointer;" onclick="closeShortcutPicker()">✕ ${currentLang === 'ar' ? 'إغلاق' : 'Fermer'}</span>`;
 
       document.getElementById('chat-back-btn-txt').innerHTML = t.groupChatBackBtn;
@@ -806,14 +794,11 @@
       document.getElementById('pchat-input').placeholder = t.chatInputPh;
       document.getElementById('notif-center-title-t').innerHTML = t.notifCenterTitle;
       document.getElementById('msgs-center-title-t').innerHTML = t.msgsCenterTitle;
-      safeSetHTML('notif-center-close-t', t.closeGeneric);
-      safeSetHTML('msgs-center-close-t', t.closeGeneric);
       renderPrivateChatList();
       renderPrivateMessages();
 
       updateNotificationBoxes();
       updateBellNotifications();
-      if (typeof renderHomeStats === 'function') renderHomeStats();
     }
 
     let currentSectionId = 'home-section';
