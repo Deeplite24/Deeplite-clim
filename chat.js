@@ -262,13 +262,11 @@
 
     function fromBellOpenPrivate(otherId) {
       document.getElementById('notif-center-box').classList.remove('show');
-      document.getElementById('msgs-center-box').classList.remove('show');
       openPrivateChat(otherId);
     }
 
     function fromBellOpenExternal(chatKey, otherCode) {
       document.getElementById('notif-center-box').classList.remove('show');
-      document.getElementById('msgs-center-box').classList.remove('show');
       openExternalChat(chatKey, otherCode);
     }
 
@@ -766,9 +764,7 @@
         if (total > 0) { badge.innerText = total > 9 ? '9+' : String(total); badge.style.display = 'flex'; }
         else { badge.style.display = 'none'; }
       }
-      // ⚠️ كان هنا استدعاء لدالة updateChatUnreadBadge() غير موجودة أصلاً (undefined) —
-      // كانت كتطيح بخطأ وتوقف الدالة قبل ما توصل لـrenderMsgsCenter تحت، وهادشي هو السبب
-      // الرئيسي لي إشعارات الرسائل الخاصة عمرها ماكانت كتتحدث/تبان.
+      updateChatUnreadBadge();
       const box = document.getElementById('msgs-center-box');
       if (box && box.classList.contains('show')) renderMsgsCenter();
     }
