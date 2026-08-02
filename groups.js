@@ -279,9 +279,15 @@
         groupMsgsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderChatMessages();
         const chatSec = document.getElementById('chat-section');
-        if (chatSec && chatSec.classList.contains('active')) {
+        if (chatSec && chatSec.classList.contains('active') && currentGroupId === groupId) {
           markVisibleMessagesSeen();
           scrollChatToBottom();
+          // ⚠️ إصلاح: قبل، resetGroupUnreadForMe() كانت غير كتندى مرة وحدة ملي كتحل
+          // الدردشة (openGroupChat) — إلا وصلات رسايل جداد ملي الدردشة راهي حاليا مفتوحة،
+          // العداد unread.[key] فـFirestore كان كيبقى يزيد بلا ما يترجع لـ0، فشارة ✉️
+          // كانت تبقى عارضة رقم خاطئ/عالق حتى تسد الدردشة وتعاود تحلها. دابا كنعاودو
+          // نصفروها فكل رسالة جديدة وصلات ملي الدردشة مفتوحة.
+          resetGroupUnreadForMe(groupId);
         }
       }, () => {});
     }
