@@ -180,7 +180,7 @@
         const avatarHtml = m.avatarIsPhoto && m.avatar ? `<img src="${m.avatar}">` : (m.avatar || '🙂');
         const blocked = isMemberBlocked(m);
         const mIsAdmin = memberIsAdmin(m);
-        const roleBadge = `<span class="emp-name-badge" style="background:${mIsAdmin ? 'rgba(56,189,248,0.16)' : 'rgba(148,163,184,0.16)'}; color:${mIsAdmin ? '#38bdf8' : '#94a3b8'};">${mIsAdmin ? (currentLang === 'ar' ? 'مسؤول' : 'Administrateur') : (currentLang === 'ar' ? 'عامل عادي' : 'Employé')}</span>`;
+        const roleBadge = `<span class="emp-name-badge ${mIsAdmin ? 'emp-name-badge-blue' : 'emp-name-badge-gray'}">${mIsAdmin ? (currentLang === 'ar' ? 'مسؤول' : 'Administrateur') : (currentLang === 'ar' ? 'عامل عادي' : 'Employé')}</span>`;
         const roleBtn = iAmAdmin ? `<button class="emp-btn" onclick="toggleMemberRole('${m.id}')">${mIsAdmin ? (currentLang === 'ar' ? 'تنزيل لعامل عادي' : 'Rétrograder') : (currentLang === 'ar' ? 'ترقية لمسؤول' : 'Promouvoir admin')}</button>` : '';
         const blockBtn = iAmAdmin ? `<button class="emp-btn ${blocked ? 'emp-danger' : ''}" onclick="toggleMemberBlock('${m.id}')">${blocked ? (currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg> فك الحظر' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg> Débloquer') : (currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> حظر' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Bloquer')}</button>` : '';
         return `<div class="emp-item ${blocked ? 'emp-blocked' : ''}">
@@ -214,7 +214,7 @@
               <div class="members-list-avatar">${avatarHtml}</div>
               <div class="members-list-info">
                 <div class="members-list-name">${name}</div>
-                ${blocked ? `<span class="emp-name-badge">${currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> محظور' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Bloqué'}</span>` : `<span style="font-size:11px; color:#94a3b8;">${currentLang === 'ar' ? 'عامل مضاف بالدعوة' : 'Employé ajouté par invitation'}</span>`}
+                ${blocked ? `<span class="emp-name-badge">${currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> محظور' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Bloqué'}</span>` : `<span class="item-sub">${currentLang === 'ar' ? 'عامل مضاف بالدعوة' : 'Employé ajouté par invitation'}</span>`}
               </div>
             </div>
             <div class="emp-actions">
@@ -253,6 +253,9 @@
         });
       }
 
+      const empBadge = document.getElementById('badge-employees');
+      const totalCount = others.length + (myCode ? (externalChatsCache.length + externalInvitesInCache.length + externalInvitesOutCache.length) : 0);
+      if (empBadge) empBadge.innerText = totalCount;
       box.innerHTML = html || `<div class="chat-empty">${t.pchatEmptyMembers}</div>`;
     }
 
@@ -965,22 +968,8 @@
       return arr.map((v, i) => ({ v, i })).sort((a, b) => {
         const ap = a.v.pendingEdit ? 1 : 0, bp = b.v.pendingEdit ? 1 : 0;
         if (ap !== bp) return ap - bp;
-        const apin = a.v.pinned ? 0 : 1, bpin = b.v.pinned ? 0 : 1;
-        if (apin !== bpin) return apin - bpin;
         return a.i - b.i;
       }).map(x => x.v);
-    }
-
-    function togglePinItem(col, id) {
-      if (!currentCompanyId) return;
-      const item = (globalData[col] || []).find(x => x.id === id);
-      if (!item) return;
-      db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update({ pinned: !item.pinned }).catch(() => {});
-    }
-
-    function pinBtnHtml(col, d) {
-      const isPinned = !!d.pinned;
-      return `<button class="btn-pin ${isPinned ? 'pinned' : ''}" onclick="togglePinItem('${col}','${d.id}')" title="${isPinned ? (currentLang === 'ar' ? 'إلغاء التثبيت' : 'Détacher') : (currentLang === 'ar' ? 'تثبيت فوق' : 'Épingler')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 17v5"/><path d="M9 4.5V10l-2 2.5v1.5h10V12.5L15 10V4.5"/><path d="M8.5 4.5h7"/></svg></button>`;
     }
 
     // ==================== تنسيق يدوي للتاريخ/الوقت/الأرقام ====================
