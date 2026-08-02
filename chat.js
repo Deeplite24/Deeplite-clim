@@ -27,12 +27,98 @@
       });
     }
 
-    // ==================== Private Chat ====================
-    // ⚠️ الميزات ديال الدردشة الخاصة (الحالة، الـlistener، الإرسال، العرض، الإشعارات)
-    // ولات فملف مستقل: private-chat.js — خاصو يتحمل فـindex.html من بعد هاد الملف
-    // (chat.js) باش يقدر يستعمل teamMembersCache/isMemberBlocked المعرّفين فوق.
+    // ==================== Private Chat (محادثة فردية بين عضوين من نفس الحساب) ====================
+    let privateChatsUnsubscribe = null;
+    let privateChatsCache = [];
+    let currentPrivateChatWith = null;
+    let privateMsgsUnsubscribe = null;
+    let privateMsgsCache = [];
 
+    function privateChatKey(idA, idB) { return [idA, idB].sort().join('__'); }
 
+    function startPrivateChatsListener(companyId) {
+      if (privateChatsUnsubscribe) { privateChatsUnsubscribe(); privateChatsUnsubscribe = null; }
+      privateChatsCache = [];
+      if (!companyId) return;
+      const myId = currentUid;
+      privateChatsUnsubscribe = db.collection('companies').doc(companyId).collection('privateChats')
+        .where('participants', 'array-contains', myId)
+        .onSnapshot(snap => {
+          privateChatsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          renderPrivateChatList();
+          updateBellNotifications();
+        });
+    }
+
+    function computeTotalPrivateUnread() {
+      const myId = currentUid;
+      return privateChatsCache.reduce((sum, c) => sum + ((c.unread && c.unread[myId]) || 0), 0);
+    }
+
+    function renderPrivateNotifRows() {
+      const myId = currentUid;
+      let rows = '';
+      privateChatsCache.forEach(c => {
+        const unread = (c.unread && c.unread[myId]) || 0;
+        if (unread > 0) {
+          const otherId = (c.participants || []).find(id => id !== myId);
+          const m = teamMembersCache.find(x => x.id === otherId);
+          const name = m ? deviceDisplayName(m) : (currentLang === 'ar' ? 'عضو' : 'Membre');
+          rows += `<div class="notif-row" onclick="fromBellOpenPrivate('${otherId}')">
+            <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 6l9 7 9-7"/></svg></span>
+            <span class="notif-row-text"><div class="notif-row-title">${name}</div><div class="notif-row-sub">${escapeChatText(c.lastMessage || '')}</div></span>
+            <span class="notif-row-badge">${unread > 9 ? '9+' : unread}</span>
+          </div>`;
+        }
+      });
+      return rows;
+    }
+
+    function renderPrivateChatList() {
+      const box = document.getElementById('pchat-members-list');
+      if (!box) return;
+      const t = translations[currentLang];
+      const myId = currentUid;
+      const others = teamMembersCache.filter(m => m.id !== myId);
+      if (!others.length) {
+        box.innerHTML = `<div class="chat-empty">${t.pchatEmptyMembers}</div>`;
+        return;
+      }
+      box.innerHTML = others.map(m => {
+        const key = privateChatKey(myId, m.id);
+        const conv = privateChatsCache.find(c => c.id === key);
+        const unread = conv && conv.unread ? (conv.unread[myId] || 0) : 0;
+        const preview = conv && conv.lastMessage ? escapeChatText(conv.lastMessage) : t.pchatStartHint;
+        const avatarHtml = m.avatarIsPhoto && m.avatar ? `<img src="${m.avatar}">` : (m.avatar || '🙂');
+        return `<div class="members-list-item" onclick="openPrivateChat('${m.id}')">
+          <div class="members-list-avatar">${avatarHtml}</div>
+          <div class="members-list-info"><div class="members-list-name">${deviceDisplayName(m)}</div><div class="members-list-preview">${preview}</div></div>
+          ${unread > 0 ? `<span class="members-list-badge">${unread > 9 ? '9+' : unread}</span>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    function openPrivateChat(otherId) {
+      const myId = currentUid;
+      const myself = teamMembersCache.find(x => x.id === myId);
+      if (isMemberBlocked(myself)) {
+        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> تم حظرك من الدردشة، تواصل مع المسؤول.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Vous avez été bloqué du chat, contactez le responsable.');
+        return;
+      }
+      const other = teamMembersCache.find(x => x.id === otherId);
+      if (isMemberBlocked(other)) {
+        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> هذا العضو محظور، قم بإلغاء حظره من "العمال" لتتمكن من مراسلته.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Ce membre est bloqué, débloquez-le depuis "Employés" pour lui écrire.');
+        return;
+      }
+      currentPrivateChatWith = otherId;
+      const m = teamMembersCache.find(x => x.id === otherId);
+      document.getElementById('pchat-header-name').innerText = m ? deviceDisplayName(m) : (currentLang === 'ar' ? 'عضو' : 'Membre');
+      document.getElementById('pchat-header-avatar').innerHTML = m && m.avatarIsPhoto && m.avatar ? `<img src="${m.avatar}">` : ((m && m.avatar) || '🙂');
+      openSection('pchat-section');
+      startPrivateMessagesListener(otherId);
+    }
+
+    // ==================== Employees Management (حظر / إضافة للدردشة الجماعية) ====================
     // ملاحظة توافق: الأعضاء اللي زادوا قبل هاد الميزة ماعندهمش حقل role — كنعتبروهم "مسؤول" باش
     // ماتوقفش عليهم الصلاحيات القديمة فجأة. غير role === 'member' الصريح هو لي كيقيد الصلاحيات.
     function memberIsAdmin(m) { return !m || m.role !== 'member'; }
@@ -174,14 +260,116 @@
       box.innerHTML = html || `<div class="chat-empty">${t.pchatEmptyMembers}</div>`;
     }
 
+    function fromBellOpenPrivate(otherId) {
+      document.getElementById('notif-center-box').classList.remove('show');
+      document.getElementById('msgs-center-box').classList.remove('show');
+      openPrivateChat(otherId);
+    }
+
     function fromBellOpenExternal(chatKey, otherCode) {
       document.getElementById('notif-center-box').classList.remove('show');
       document.getElementById('msgs-center-box').classList.remove('show');
       openExternalChat(chatKey, otherCode);
     }
 
-    // fromBellOpenPrivate, closePrivateChat, startPrivateMessagesListener, renderPrivateMessages,
-    // sendPrivateMessage, markPrivateChatSeen, scrollPrivateChatToBottom → ولات فـprivate-chat.js
+    function closePrivateChat() {
+      if (privateMsgsUnsubscribe) { privateMsgsUnsubscribe(); privateMsgsUnsubscribe = null; }
+      currentPrivateChatWith = null;
+      openSection('pchat-list-section');
+    }
+
+    function startPrivateMessagesListener(otherId) {
+      if (privateMsgsUnsubscribe) { privateMsgsUnsubscribe(); privateMsgsUnsubscribe = null; }
+      privateMsgsCache = [];
+      if (!currentUid) return;
+      const myId = currentUid;
+      const key = privateChatKey(myId, otherId);
+      privateMsgsUnsubscribe = db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key).collection('messages')
+        .orderBy('createdAt', 'asc')
+        .onSnapshot(snap => {
+          privateMsgsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          renderPrivateMessages();
+          scrollPrivateChatToBottom();
+          if (currentPrivateChatWith === otherId) markPrivateChatSeen(otherId);
+        });
+    }
+
+    function renderPrivateMessages() {
+      const box = document.getElementById('pchat-messages');
+      if (!box) return;
+      if (!privateMsgsCache.length) {
+        box.innerHTML = `<div class="chat-empty">${currentLang === 'ar' ? 'لا توجد رسائل بعد، ابدأ المحادثة!' : 'Aucun message, lancez la conversation !'}</div>`;
+        return;
+      }
+      const myId = currentUid;
+      box.innerHTML = privateMsgsCache.map(m => {
+        const mine = m.senderId === myId;
+        const avatarHtml = m.senderAvatarIsPhoto && m.senderAvatar ? `<img src="${m.senderAvatar}">` : (m.senderAvatar || '🙂');
+        let timeStr = '';
+        try {
+          if (m.createdAt && m.createdAt.toDate) timeStr = formatTimeShort(m.createdAt.toDate());
+        } catch (e) {}
+        return `
+          <div class="chat-msg-row ${mine ? 'mine' : ''}">
+            <div class="chat-avatar clickable" onclick="showMemberInfo('${m.senderId}')">${avatarHtml}</div>
+            <div class="chat-bubble-col">
+              <div class="chat-bubble">${escapeChatText(m.text || '')}</div>
+              <div class="chat-meta-row">${timeStr}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function sendPrivateMessage() {
+      if (!currentUid || !currentPrivateChatWith) return;
+      const input = document.getElementById('pchat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      const p = getDeviceProfile();
+      if (!p || (!p.firstName && !p.lastName)) { openDeviceProfileModal(true); return; }
+      const myId = currentUid;
+      const otherId = currentPrivateChatWith;
+      const myself = teamMembersCache.find(x => x.id === myId);
+      const other = teamMembersCache.find(x => x.id === otherId);
+      if (isMemberBlocked(myself) || isMemberBlocked(other)) {
+        alert(currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> هذه المحادثة محظورة، لا يمكنك إرسال رسائل.' : '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cette conversation est bloquée, envoi impossible.');
+        return;
+      }
+      const key = privateChatKey(myId, otherId);
+      const parentRef = db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key);
+      const msg = {
+        text, senderId: myId, senderName: deviceDisplayName(p),
+        senderAvatar: p.avatar || '', senderAvatarIsPhoto: !!p.avatarIsPhoto,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      parentRef.collection('messages').add(msg).then(() => {
+        const update = {
+          participants: firebase.firestore.FieldValue.arrayUnion(myId, otherId),
+          lastMessage: text,
+          lastMessageAt: new Date().toISOString(),
+          lastSenderId: myId
+        };
+        update['unread.' + otherId] = firebase.firestore.FieldValue.increment(1);
+        update['unread.' + myId] = 0;
+        parentRef.set(update, { merge: true });
+        input.value = '';
+        scrollPrivateChatToBottom();
+      });
+    }
+
+    function markPrivateChatSeen(otherId) {
+      if (!currentUid) return;
+      const myId = currentUid;
+      const key = privateChatKey(myId, otherId);
+      const update = {};
+      update['unread.' + myId] = 0;
+      db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key).set(update, { merge: true }).catch(() => {});
+    }
+
+    function scrollPrivateChatToBottom() {
+      const box = document.getElementById('pchat-messages');
+      if (box) box.scrollTop = box.scrollHeight;
+    }
 
     // ==================== Chat by Code (تواصل مع ناس من حسابات أخرى عن طريق كود مميز) ====================
     let externalInvitesUnsubIn = null, externalInvitesUnsubOut = null;
@@ -568,31 +756,19 @@
       });
       return list;
     }
-    // ⚠️ هاد الدالة كانت كتنداوى من computeMsgsBellTotal() (تحت) ومن openChatChoice() فـui.js، بصح
-    // ماكانتش معرّفة حتى فبلاصة (undefined) — كانت كتطيح بخطأ (ReferenceError) وتوقف updateMsgsNotifications()
-    // من البداية قبل ما توصل باش تحدث شارة الرسائل أو تعرض الرسائل الخاصة. هادشي هو السبب الحقيقي
-    // لي إشعارات الرسائل الخاصة عمرها ماكانت كتبان.
-    function computeGroupChatUnread() {
-      if (typeof myVisibleGroups !== 'function' || typeof myGroupSenderKey !== 'function') return 0;
-      return myVisibleGroups().reduce((sum, g) => {
-        const key = myGroupSenderKey(g);
-        const unread = (g.unread && key && g.unread[key]) || 0;
-        return sum + unread;
-      }, 0);
-    }
-
     function computeMsgsBellTotal() {
       return computeGroupChatUnread() + computeTotalPrivateUnread() + computeTotalExternalUnread() + computeExternalIncomingInvites() + computeNewGroupJoinNotifs().length;
     }
     function updateMsgsNotifications() {
       const badge = document.getElementById('msgs-badge');
-      let total = 0;
-      try { total = computeMsgsBellTotal(); }
-      catch (e) { console.error('[DeepliteClim] computeMsgsBellTotal failed:', e); }
+      const total = computeMsgsBellTotal();
       if (badge) {
         if (total > 0) { badge.innerText = total > 9 ? '9+' : String(total); badge.style.display = 'flex'; }
         else { badge.style.display = 'none'; }
       }
+      // ⚠️ كان هنا استدعاء لدالة updateChatUnreadBadge() غير موجودة أصلاً (undefined) —
+      // كانت كتطيح بخطأ وتوقف الدالة قبل ما توصل لـrenderMsgsCenter تحت، وهادشي هو السبب
+      // الرئيسي لي إشعارات الرسائل الخاصة عمرها ماكانت كتتحدث/تبان.
       const box = document.getElementById('msgs-center-box');
       if (box && box.classList.contains('show')) renderMsgsCenter();
     }
@@ -602,56 +778,47 @@
       if (!box) return;
       const t = translations[currentLang];
       let rows = '';
-      try {
-        computeNewGroupJoinNotifs().forEach(g => {
+      computeNewGroupJoinNotifs().forEach(g => {
+        rows += `<div class="notif-row" onclick="fromMsgsOpenGroup('${g.id}')">
+          <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="8.5" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.6"/><path d="M3 19c.7-3 3-4.8 5.7-4.8S13.8 16 14.5 19"/><path d="M14.9 14.5c2.1.4 3.6 1.9 4.1 4.4"/></svg></span>
+          <span class="notif-row-text"><div class="notif-row-title">${t.joinedGroupNotif} ${escapeChatText(g.name || '')}</div></span>
+          <span class="join-group-badge">🆕</span>
+        </div>`;
+      });
+      myVisibleGroups().forEach(g => {
+        const key = myGroupSenderKey(g);
+        const unread = (g.unread && key && g.unread[key]) || 0;
+        if (unread > 0) {
           rows += `<div class="notif-row" onclick="fromMsgsOpenGroup('${g.id}')">
-            <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="8.5" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.6"/><path d="M3 19c.7-3 3-4.8 5.7-4.8S13.8 16 14.5 19"/><path d="M14.9 14.5c2.1.4 3.6 1.9 4.1 4.4"/></svg></span>
-            <span class="notif-row-text"><div class="notif-row-title">${t.joinedGroupNotif} ${escapeChatText(g.name || '')}</div></span>
-            <span class="join-group-badge">🆕</span>
+            <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 5h16v10.5H10.5L6 19v-3.5H4z"/></svg></span>
+            <span class="notif-row-text"><div class="notif-row-title">${escapeChatText(g.name || '')}</div><div class="notif-row-sub">${escapeChatText(g.lastMessage || '')}</div></span>
+            <span class="notif-row-badge">${unread > 9 ? '9+' : unread}</span>
           </div>`;
-        });
-      } catch (e) { console.error('[DeepliteClim] renderMsgsCenter (group joins) failed:', e); }
-      try {
-        myVisibleGroups().forEach(g => {
-          const key = myGroupSenderKey(g);
-          const unread = (g.unread && key && g.unread[key]) || 0;
+        }
+      });
+      rows += renderPrivateNotifRows();
+      externalInvitesInCache.forEach(inv => {
+        rows += `<div class="notif-row" onclick="fromMsgsGoTo('excht-list-section')">
+          <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg></span>
+          <span class="notif-row-text"><div class="notif-row-title">${inv.fromName || inv.fromCode}</div><div class="notif-row-sub">${t.exchtIncomingHint}</div></span>
+          <span class="notif-row-badge"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
+        </div>`;
+      });
+      const myCode = (getDeviceProfile() || {}).code;
+      if (myCode) {
+        externalChatsCache.forEach(c => {
+          const unread = (c.unread && c.unread[myCode]) || 0;
           if (unread > 0) {
-            rows += `<div class="notif-row" onclick="fromMsgsOpenGroup('${g.id}')">
-              <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 5h16v10.5H10.5L6 19v-3.5H4z"/></svg></span>
-              <span class="notif-row-text"><div class="notif-row-title">${escapeChatText(g.name || '')}</div><div class="notif-row-sub">${escapeChatText(g.lastMessage || '')}</div></span>
+            const otherCode = (c.participants || []).find(code => code !== myCode);
+            const name = (c.names && c.names[otherCode]) || otherCode;
+            rows += `<div class="notif-row" onclick="fromMsgsOpenExternal('${c.id}','${otherCode}')">
+              <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg></span>
+              <span class="notif-row-text"><div class="notif-row-title">${name}</div><div class="notif-row-sub">${escapeChatText(c.lastMessage || '')}</div></span>
               <span class="notif-row-badge">${unread > 9 ? '9+' : unread}</span>
             </div>`;
           }
         });
-      } catch (e) { console.error('[DeepliteClim] renderMsgsCenter (group unread) failed:', e); }
-      try { rows += renderPrivateNotifRows(); }
-      catch (e) { console.error('[DeepliteClim] renderMsgsCenter (private) failed:', e); }
-      try {
-        externalInvitesInCache.forEach(inv => {
-          rows += `<div class="notif-row" onclick="fromMsgsGoTo('excht-list-section')">
-            <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg></span>
-            <span class="notif-row-text"><div class="notif-row-title">${inv.fromName || inv.fromCode}</div><div class="notif-row-sub">${t.exchtIncomingHint}</div></span>
-            <span class="notif-row-badge"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
-          </div>`;
-        });
-      } catch (e) { console.error('[DeepliteClim] renderMsgsCenter (external invites) failed:', e); }
-      try {
-        const myCode = (getDeviceProfile() || {}).code;
-        if (myCode) {
-          externalChatsCache.forEach(c => {
-            const unread = (c.unread && c.unread[myCode]) || 0;
-            if (unread > 0) {
-              const otherCode = (c.participants || []).find(code => code !== myCode);
-              const name = (c.names && c.names[otherCode]) || otherCode;
-              rows += `<div class="notif-row" onclick="fromMsgsOpenExternal('${c.id}','${otherCode}')">
-                <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg></span>
-                <span class="notif-row-text"><div class="notif-row-title">${name}</div><div class="notif-row-sub">${escapeChatText(c.lastMessage || '')}</div></span>
-                <span class="notif-row-badge">${unread > 9 ? '9+' : unread}</span>
-              </div>`;
-            }
-          });
-        }
-      } catch (e) { console.error('[DeepliteClim] renderMsgsCenter (external chats) failed:', e); }
+      }
       box.innerHTML = rows || `<div class="notif-center-empty">${t.notifCenterEmpty}</div>`;
     }
 
