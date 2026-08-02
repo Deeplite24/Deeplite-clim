@@ -26,22 +26,26 @@
       // ⚠️ تصحيح: كنقراو بـ memberIds array-contains عوض ownerUid — باش كل عضو مزاد
       // لمجموعة (ماشي غير خالقها) يقدر يشوفها ويوصل ليها.
       ownedGroupsUnsub = db.collection('groups').where('memberIds', 'array-contains', currentUid).onSnapshot(snap => {
-        ownedGroupsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        backfillMissingAuthorizedUids(ownedGroupsCache);
-        renderGroupsList();
-        updateBellNotifications();
-        updateChatUnreadBadge();
-        __directGroupDebugUpdate();
-      }, err => console.error('[DeepliteClim] ownedGroups listener died:', err));
-      const p = getDeviceProfile();
-      if (p && p.code) {
-        externalGroupsUnsub = db.collection('groups').where('externalMemberCodes', 'array-contains', p.code).onSnapshot(snap => {
-          externalGroupsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          backfillMissingAuthorizedUids(externalGroupsCache);
+        try {
+          ownedGroupsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          backfillMissingAuthorizedUids(ownedGroupsCache);
           renderGroupsList();
           updateBellNotifications();
           updateChatUnreadBadge();
           __directGroupDebugUpdate();
+        } catch (e) { console.error('[DeepliteClim] ownedGroups listener failed:', e); }
+      }, err => console.error('[DeepliteClim] ownedGroups listener died:', err));
+      const p = getDeviceProfile();
+      if (p && p.code) {
+        externalGroupsUnsub = db.collection('groups').where('externalMemberCodes', 'array-contains', p.code).onSnapshot(snap => {
+          try {
+            externalGroupsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            backfillMissingAuthorizedUids(externalGroupsCache);
+            renderGroupsList();
+            updateBellNotifications();
+            updateChatUnreadBadge();
+            __directGroupDebugUpdate();
+          } catch (e) { console.error('[DeepliteClim] externalGroups listener failed:', e); }
         }, err => console.error('[DeepliteClim] externalGroups listener died:', err));
       }
     }
@@ -276,20 +280,29 @@
       if (groupMsgsUnsub) { groupMsgsUnsub(); groupMsgsUnsub = null; }
       groupMsgsCache = [];
       groupMsgsUnsub = db.collection('groups').doc(groupId).collection('messages').orderBy('createdAt', 'asc').onSnapshot(snap => {
-        groupMsgsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderChatMessages();
-        const chatSec = document.getElementById('chat-section');
-        if (chatSec && chatSec.classList.contains('active') && currentGroupId === groupId) {
-          markVisibleMessagesSeen();
-          scrollChatToBottom();
-          // ⚠️ إصلاح: قبل، resetGroupUnreadForMe() كانت غير كتندى مرة وحدة ملي كتحل
-          // الدردشة (openGroupChat) — إلا وصلات رسايل جداد ملي الدردشة راهي حاليا مفتوحة،
-          // العداد unread.[key] فـFirestore كان كيبقى يزيد بلا ما يترجع لـ0، فشارة ✉️
-          // كانت تبقى عارضة رقم خاطئ/عالق حتى تسد الدردشة وتعاود تحلها. دابا كنعاودو
-          // نصفروها فكل رسالة جديدة وصلات ملي الدردشة مفتوحة.
-          resetGroupUnreadForMe(groupId);
+        try {
+          groupMsgsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          renderChatMessages();
+          const chatSec = document.getElementById('chat-section');
+          if (chatSec && chatSec.classList.contains('active') && currentGroupId === groupId) {
+            markVisibleMessagesSeen();
+            scrollChatToBottom();
+            // ⚠️ إصلاح: قبل، resetGroupUnreadForMe() كانت غير كتندى مرة وحدة ملي كتحل
+            // الدردشة (openGroupChat) — إلا وصلات رسايل جداد ملي الدردشة راهي حاليا مفتوحة،
+            // العداد unread.[key] فـFirestore كان كيبقى يزيد بلا ما يترجع لـ0، فشارة ✉️
+            // كانت تبقى عارضة رقم خاطئ/عالق حتى تسد الدردشة وتعاود تحلها. دابا كنعاودو
+            // نصفروها فكل رسالة جديدة وصلات ملي الدردشة مفتوحة.
+            resetGroupUnreadForMe(groupId);
+          }
+        } catch (e) {
+          // ⚠️ إصلاح: قبل، إلا طاحت شي دالة هنا بخطأ (مثلا renderChatMessages بسبب
+          // رسالة قديمة/ناقصة الشكل)، الخطأ كان كيوقف الدالة كاملة بصمت — والأخطر،
+          // حيت هاد الكود كيتندى فكل مرة توصل رسالة جديدة، كان معناه أي رسالة جداد
+          // مايبانوش فالدردشة حتى تسد وتعاود تحل من جديد. دابا كنمسكو الخطأ ونبينوه
+          // فـconsole بلا ما نوقفو الاستماع للرسائل الجداد.
+          console.error('[DeepliteClim] group messages listener failed:', e);
         }
-      }, () => {});
+      }, err => console.error('[DeepliteClim] group messages listener died:', err));
     }
 
     function sendChatMessage() {
@@ -335,6 +348,13 @@
         });
         input.value = '';
         scrollChatToBottom();
+      }).catch(err => {
+        // ⚠️ إصلاح: قبل، ملي الإرسال يفشل (مشكل صلاحيات Firestore، انقطاع نت...) ماكان
+        // كاين حتى تنبيه — الرسالة كانت تختفي بلا ما توصل، بلا ما يبان أي خطأ للمستخدم،
+        // وهو لي كان كيبان كـ"الرسائل ماكيوصلوش". دابا كنبينو خطأ واضح ونخليو النص
+        // فالخانة باش المستخدم يقدر يعاود يصيفط بلا ما يخسر لي كتب.
+        console.error('[DeepliteClim] sendChatMessage failed:', err);
+        showSaveError(err);
       });
     }
 
@@ -348,6 +368,7 @@
       const g = findGroupById(currentGroupId);
       const myKey = myGroupSenderKey(g);
       box.innerHTML = groupMsgsCache.map(m => {
+        try {
         const mine = m.senderKey === myKey;
         const avatarHtml = m.senderAvatarIsPhoto && m.senderAvatar ? `<img src="${m.senderAvatar}">` : (m.senderAvatar || '🙂');
         let timeStr = '';
@@ -381,6 +402,14 @@
               ${seenHtml}
             </div>
           </div>`;
+        } catch (e) {
+          // ⚠️ إصلاح: قبل، إلا كانت شي رسالة وحدة بشكل غير متوقع (حقل ناقص مثلا)،
+          // .map() كامل كان كيطيح بخطأ وكيبقى box.innerHTML خاوي — يعني الدردشة
+          // كاملة تبان فارغة (لا رسائل قدام، لا جداد) بلا أي تفسير. دابا كنخبيو غير
+          // هاد الرسالة الوحدة ونكملو الباقي.
+          console.error('[DeepliteClim] renderChatMessages: skipped one malformed message:', e, m);
+          return '';
+        }
       }).join('');
     }
 
