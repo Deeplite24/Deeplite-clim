@@ -31,6 +31,7 @@
         renderGroupsList();
         updateChatUnreadBadge();
         updateBellNotifications();
+        __directGroupDebugUpdate();
       }, err => console.error('[DeepliteClim] ownedGroups listener died:', err));
       const p = getDeviceProfile();
       if (p && p.code) {
@@ -40,8 +41,28 @@
           renderGroupsList();
           updateChatUnreadBadge();
           updateBellNotifications();
+          __directGroupDebugUpdate();
         }, err => console.error('[DeepliteClim] externalGroups listener died:', err));
       }
+    }
+
+    // ⚠️ اختبار معزول مؤقت: كيكتب مباشرة فشريط أحمر ثابت فوق الصفحة، بلا ما يمر بأي
+    // دالة أخرى (لا computeGroupChatUnread، لا updateBellNotifications، لا notify-msgs) —
+    // باش نتأكدو واش الـlistener ديال المجموعات كيتوصل بيه فعلا بتحديثات حية.
+    let __directGroupDebugCount = 0;
+    function __directGroupDebugUpdate() {
+      __directGroupDebugCount++;
+      let el = document.getElementById('__direct-group-debug');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = '__direct-group-debug';
+        el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#dc2626;color:#fff;font-size:11px;padding:4px 8px;direction:ltr;text-align:left;';
+        document.body.appendChild(el);
+      }
+      const myId = currentUid;
+      let total = 0;
+      ownedGroupsCache.forEach(g => { total += (g.unread && myId && g.unread[myId]) || 0; });
+      el.innerText = 'GROUP-DEBUG • listener fired: ' + __directGroupDebugCount + 'x • groups: ' + ownedGroupsCache.length + ' • unread total: ' + total + ' • ' + new Date().toLocaleTimeString();
     }
 
     function restartExternalGroupsListenerIfNeeded() {
