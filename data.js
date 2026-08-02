@@ -15,9 +15,6 @@
       dataLoading = { cheques: true, stock: true, installations: true, notes: true };
       renderNavShortcuts();
       if (typeof startAccessListener === 'function') startAccessListener(companyId); // قائمة عمال الشركة + الصلاحيات ديالهم
-      if (typeof startMembersListener === 'function') startMembersListener(companyId); // دليل الأعضاء (بحال الاسم الحالي، الحظر...)
-      if (typeof upsertMember === 'function') upsertMember(); // كنحدثو السمية الحالية فكل دخول، باش ما تبقاش سمية قديمة
-      if (typeof startPrivateChatsListener === 'function') startPrivateChatsListener(companyId); // المحادثات الخاصة + إشعاراتها (بلا هادشي، إشعارات الرسائل الخاصة ماكانتش كتبان غير وقت خلق/الانضمام للشركة)
       db.collection('companies').doc(companyId).collection('cheques').onSnapshot(snapshot => {
         dataLoading.cheques = false;
         if (snapshot.empty) {
@@ -131,7 +128,7 @@
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('cheques', d)}
           ${renderPendingEditBox('cheques', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditCheque('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('cheques', d.id, t)}</span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;">${editBtnHtml('cheques', d.id)}${deleteBtnHtml('cheques', d.id, t)}</span></div>
         </div>`).join('');
       }
       updateNotificationBoxes();
@@ -166,7 +163,7 @@
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('stock', d)}
           ${renderPendingEditBox('stock', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditStock('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('stock', d.id, t)}</span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;">${editBtnHtml('stock', d.id)}${deleteBtnHtml('stock', d.id, t)}</span></div>
         </div>`;
         }).join('');
       }
@@ -206,7 +203,7 @@
           ${formatUpdateInfo(d)}
             ${renderPreviousValueBox('installations', d)}
             ${renderPendingEditBox('installations', d)}
-            <div class="item-actions">${mapButtonHtml}<span style="display:flex; gap:8px;"><button class="btn-map-link" onclick="printServiceCertificate('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg> ${currentLang === 'ar' ? 'طباعة شهادة' : 'Certificat'}</button><button class="btn-edit" onclick="startEditInstallation('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('installations', d.id, t)}</span></div>
+            <div class="item-actions">${mapButtonHtml}<span style="display:flex; gap:8px;"><button class="btn-map-link" onclick="printServiceCertificate('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg> ${currentLang === 'ar' ? 'طباعة شهادة' : 'Certificat'}</button>${editBtnHtml('installations', d.id)}${deleteBtnHtml('installations', d.id, t)}</span></div>
           </div>`;
         }).join('');
       }
@@ -238,7 +235,7 @@
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('notes', d)}
           ${renderPendingEditBox('notes', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditNote('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('notes', d.id, t)}</span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;">${editBtnHtml('notes', d.id)}${deleteBtnHtml('notes', d.id, t)}</span></div>
         </div>`).join('');
       }
       updateNotificationBoxes();
@@ -340,8 +337,9 @@
 
     function addCheque() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('cheques')) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل الشيكات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les chèques, contactez l'administrateur.");
+      const chqAction = editingItem.cheques ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('cheques', chqAction)) {
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل الشيكات، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les chèques, contactez l'administrateur.");
         return;
       }
       const num = document.getElementById('chk-num').value.trim();
@@ -362,8 +360,9 @@
 
     function addStockItem() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('stock')) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل المخزون، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier le stock, contactez l'administrateur.");
+      const stkAction = editingItem.stock ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('stock', stkAction)) {
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل المخزون، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier le stock, contactez l'administrateur.");
         return;
       }
       const name = document.getElementById('item-name').value.trim();
@@ -384,8 +383,9 @@
 
     function addInstallation() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('installations')) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل التركيب/الخدمات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les installations/services, contactez l'administrateur.");
+      const instAction = editingItem.installations ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('installations', instAction)) {
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل التركيب/الخدمات، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les installations/services, contactez l'administrateur.");
         return;
       }
       const client = document.getElementById('client-name').value.trim();
@@ -408,8 +408,9 @@
 
     function addNote() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('notes')) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل الملاحظات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les notes, contactez l'administrateur.");
+      const noteAction = editingItem.notes ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('notes', noteAction)) {
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل الملاحظات، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les notes, contactez l'administrateur.");
         return;
       }
       const text = document.getElementById('note-text').value.trim();
@@ -472,14 +473,24 @@
 
     setInterval(advanceRecurringItems, 60000);
 
+    function editBtnHtml(col, id) {
+      const canEdit = typeof hasSectionPermission === 'function' ? hasSectionPermission(col, 'edit') : isCurrentUserAdmin();
+      if (!canEdit) return '';
+      const fnMap = { cheques: 'startEditCheque', stock: 'startEditStock', installations: 'startEditInstallation', notes: 'startEditNote' };
+      const fn = fnMap[col];
+      return `<button class="btn-edit" onclick="${fn}('${id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>`;
+    }
+
     function deleteBtnHtml(col, id, t) {
-      return isCurrentUserAdmin() ? `<button class="btn-delete" onclick="deleteItem('${col}','${id}')">${t.delBtn}</button>` : '';
+      const canDelete = typeof hasSectionPermission === 'function' ? hasSectionPermission(col, 'delete') : isCurrentUserAdmin();
+      return canDelete ? `<button class="btn-delete" onclick="deleteItem('${col}','${id}')">${t.delBtn}</button>` : '';
     }
 
     function deleteItem(col, id) {
       if (!currentCompanyId) return;
-      if (!isCurrentUserAdmin()) {
-        alert(currentLang === 'ar' ? 'الحذف متاح فقط للمسؤول، تواصل معه.' : "La suppression est réservée à l'administrateur, contactez-le.");
+      const canDelete = typeof hasSectionPermission === 'function' ? hasSectionPermission(col, 'delete') : isCurrentUserAdmin();
+      if (!canDelete) {
+        alert(currentLang === 'ar' ? 'ماعندكش صلاحية الحذف فهاد القسم، تواصل مع المسؤول.' : "Vous n'avez pas la permission de supprimer dans cette section, contactez l'administrateur.");
         return;
       }
       if (confirm(currentLang === 'ar' ? "هل أنت متأكد من الحذف؟\nÊtes-vous sûr de vouloir supprimer ?" : "Êtes-vous sûr de vouloir supprimer ?\nهل أنت متأكد من الحذف؟")) { 
@@ -526,7 +537,7 @@
       if (opsInBatch > 0) commits.push(batch.commit());
 
       if (fixedCount === 0) {
-        alert(currentLang === 'ar' ? 'لا يوجد أي عنصر بحاجة إلى إصلاح.' : 'Aucun élément à corriger.');
+        alert(currentLang === 'ar' ? 'لا يوجد أي عنصر بحاجة إلى تصحيح.' : 'Aucun élément à corriger.');
         return;
       }
       Promise.all(commits).then(() => {
