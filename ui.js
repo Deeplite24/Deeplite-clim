@@ -806,6 +806,8 @@
       document.getElementById('pchat-input').placeholder = t.chatInputPh;
       document.getElementById('notif-center-title-t').innerHTML = t.notifCenterTitle;
       document.getElementById('msgs-center-title-t').innerHTML = t.msgsCenterTitle;
+      safeSetHTML('notif-center-close-t', t.closeGeneric);
+      safeSetHTML('msgs-center-close-t', t.closeGeneric);
       renderPrivateChatList();
       renderPrivateMessages();
 
