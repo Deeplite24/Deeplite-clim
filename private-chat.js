@@ -125,7 +125,8 @@
           privateMsgsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderPrivateMessages();
           scrollPrivateChatToBottom();
-          if (currentPrivateChatWith === otherId) markPrivateChatSeen(otherId);
+          const pchatSec = document.getElementById('pchat-section');
+          if (currentPrivateChatWith === otherId && pchatSec && pchatSec.classList.contains('active')) markPrivateChatSeen(otherId);
         });
     }
 

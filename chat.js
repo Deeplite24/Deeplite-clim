@@ -586,14 +586,13 @@
     }
     function updateMsgsNotifications() {
       const badge = document.getElementById('msgs-badge');
-      const total = computeMsgsBellTotal();
+      let total = 0;
+      try { total = computeMsgsBellTotal(); }
+      catch (e) { console.error('[DeepliteClim] computeMsgsBellTotal failed:', e); }
       if (badge) {
         if (total > 0) { badge.innerText = total > 9 ? '9+' : String(total); badge.style.display = 'flex'; }
         else { badge.style.display = 'none'; }
       }
-      // ⚠️ كان هنا استدعاء لدالة updateChatUnreadBadge() غير موجودة أصلاً (undefined) —
-      // كانت كتطيح بخطأ وتوقف الدالة قبل ما توصل لـrenderMsgsCenter تحت، وهادشي هو السبب
-      // الرئيسي لي إشعارات الرسائل الخاصة عمرها ماكانت كتتحدث/تبان.
       const box = document.getElementById('msgs-center-box');
       if (box && box.classList.contains('show')) renderMsgsCenter();
     }
@@ -603,47 +602,56 @@
       if (!box) return;
       const t = translations[currentLang];
       let rows = '';
-      computeNewGroupJoinNotifs().forEach(g => {
-        rows += `<div class="notif-row" onclick="fromMsgsOpenGroup('${g.id}')">
-          <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="8.5" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.6"/><path d="M3 19c.7-3 3-4.8 5.7-4.8S13.8 16 14.5 19"/><path d="M14.9 14.5c2.1.4 3.6 1.9 4.1 4.4"/></svg></span>
-          <span class="notif-row-text"><div class="notif-row-title">${t.joinedGroupNotif} ${escapeChatText(g.name || '')}</div></span>
-          <span class="join-group-badge">🆕</span>
-        </div>`;
-      });
-      myVisibleGroups().forEach(g => {
-        const key = myGroupSenderKey(g);
-        const unread = (g.unread && key && g.unread[key]) || 0;
-        if (unread > 0) {
+      try {
+        computeNewGroupJoinNotifs().forEach(g => {
           rows += `<div class="notif-row" onclick="fromMsgsOpenGroup('${g.id}')">
-            <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 5h16v10.5H10.5L6 19v-3.5H4z"/></svg></span>
-            <span class="notif-row-text"><div class="notif-row-title">${escapeChatText(g.name || '')}</div><div class="notif-row-sub">${escapeChatText(g.lastMessage || '')}</div></span>
-            <span class="notif-row-badge">${unread > 9 ? '9+' : unread}</span>
+            <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="8.5" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.6"/><path d="M3 19c.7-3 3-4.8 5.7-4.8S13.8 16 14.5 19"/><path d="M14.9 14.5c2.1.4 3.6 1.9 4.1 4.4"/></svg></span>
+            <span class="notif-row-text"><div class="notif-row-title">${t.joinedGroupNotif} ${escapeChatText(g.name || '')}</div></span>
+            <span class="join-group-badge">🆕</span>
           </div>`;
-        }
-      });
-      rows += renderPrivateNotifRows();
-      externalInvitesInCache.forEach(inv => {
-        rows += `<div class="notif-row" onclick="fromMsgsGoTo('excht-list-section')">
-          <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg></span>
-          <span class="notif-row-text"><div class="notif-row-title">${inv.fromName || inv.fromCode}</div><div class="notif-row-sub">${t.exchtIncomingHint}</div></span>
-          <span class="notif-row-badge"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
-        </div>`;
-      });
-      const myCode = (getDeviceProfile() || {}).code;
-      if (myCode) {
-        externalChatsCache.forEach(c => {
-          const unread = (c.unread && c.unread[myCode]) || 0;
+        });
+      } catch (e) { console.error('[DeepliteClim] renderMsgsCenter (group joins) failed:', e); }
+      try {
+        myVisibleGroups().forEach(g => {
+          const key = myGroupSenderKey(g);
+          const unread = (g.unread && key && g.unread[key]) || 0;
           if (unread > 0) {
-            const otherCode = (c.participants || []).find(code => code !== myCode);
-            const name = (c.names && c.names[otherCode]) || otherCode;
-            rows += `<div class="notif-row" onclick="fromMsgsOpenExternal('${c.id}','${otherCode}')">
-              <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg></span>
-              <span class="notif-row-text"><div class="notif-row-title">${name}</div><div class="notif-row-sub">${escapeChatText(c.lastMessage || '')}</div></span>
+            rows += `<div class="notif-row" onclick="fromMsgsOpenGroup('${g.id}')">
+              <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 5h16v10.5H10.5L6 19v-3.5H4z"/></svg></span>
+              <span class="notif-row-text"><div class="notif-row-title">${escapeChatText(g.name || '')}</div><div class="notif-row-sub">${escapeChatText(g.lastMessage || '')}</div></span>
               <span class="notif-row-badge">${unread > 9 ? '9+' : unread}</span>
             </div>`;
           }
         });
-      }
+      } catch (e) { console.error('[DeepliteClim] renderMsgsCenter (group unread) failed:', e); }
+      try { rows += renderPrivateNotifRows(); }
+      catch (e) { console.error('[DeepliteClim] renderMsgsCenter (private) failed:', e); }
+      try {
+        externalInvitesInCache.forEach(inv => {
+          rows += `<div class="notif-row" onclick="fromMsgsGoTo('excht-list-section')">
+            <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg></span>
+            <span class="notif-row-text"><div class="notif-row-title">${inv.fromName || inv.fromCode}</div><div class="notif-row-sub">${t.exchtIncomingHint}</div></span>
+            <span class="notif-row-badge"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
+          </div>`;
+        });
+      } catch (e) { console.error('[DeepliteClim] renderMsgsCenter (external invites) failed:', e); }
+      try {
+        const myCode = (getDeviceProfile() || {}).code;
+        if (myCode) {
+          externalChatsCache.forEach(c => {
+            const unread = (c.unread && c.unread[myCode]) || 0;
+            if (unread > 0) {
+              const otherCode = (c.participants || []).find(code => code !== myCode);
+              const name = (c.names && c.names[otherCode]) || otherCode;
+              rows += `<div class="notif-row" onclick="fromMsgsOpenExternal('${c.id}','${otherCode}')">
+                <span class="notif-row-icon"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg></span>
+                <span class="notif-row-text"><div class="notif-row-title">${name}</div><div class="notif-row-sub">${escapeChatText(c.lastMessage || '')}</div></span>
+                <span class="notif-row-badge">${unread > 9 ? '9+' : unread}</span>
+              </div>`;
+            }
+          });
+        }
+      } catch (e) { console.error('[DeepliteClim] renderMsgsCenter (external chats) failed:', e); }
       box.innerHTML = rows || `<div class="notif-center-empty">${t.notifCenterEmpty}</div>`;
     }
 
