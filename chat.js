@@ -351,9 +351,18 @@
         };
         update['unread.' + otherId] = firebase.firestore.FieldValue.increment(1);
         update['unread.' + myId] = 0;
-        parentRef.set(update, { merge: true });
+        // ⚠️ زدنا .catch هنا: هاد التحديث (unread/participants/lastMessage) كان بلا أي معالجة خطأ —
+        // إلا رفضتو قواعد الأمان (Firestore Rules) أو أي مشكل آخر، كان كيفشل بصمت (الرسالة نفسها
+        // كتبقى توصل حيت هي كتابة منفصلة فـmessages)، والشارة/الإشعار عمرهم ما يتحدثو بلا ما يبان أي خطأ.
+        parentRef.set(update, { merge: true }).catch(err => {
+          console.error('sendPrivateMessage unread update error:', err);
+          showSaveError(err);
+        });
         input.value = '';
         scrollPrivateChatToBottom();
+      }).catch(err => {
+        console.error('sendPrivateMessage error:', err);
+        showSaveError(err);
       });
     }
 
