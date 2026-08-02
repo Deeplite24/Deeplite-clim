@@ -564,6 +564,14 @@
         if (seen.includes(g.id)) return;
         const isOwnerCreator = g.ownerUid === currentUid && g.createdBy === myId;
         if (isOwnerCreator) { markGroupJoinSeen(g.id); return; }
+        // ⚠️ إصلاح: إلا كان عند هاد المجموعة رسائل ماقريتهاش أصلا (unread > 0)، خاصنا
+        // منزيدوش صف "انضميت لمجموعة X" فوق صف الرسالة غير المقروءة — الصفين كيوديو
+        // لنفس المجموعة، وكيبقى صف "انضميت" (قديم بلا علاقة بآخر رسالة) عالق فالقائمة
+        // حتى إلا قريتي الرسائل الجداد من صف تاني، وهو لي كان كيبان كـ"إشعار قديم"
+        // بلا علاقة بآخر ميساج تصيفط.
+        const key = myGroupSenderKey(g);
+        const unread = (g.unread && key && g.unread[key]) || 0;
+        if (unread > 0) return;
         list.push(g);
       });
       return list;
