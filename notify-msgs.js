@@ -13,24 +13,29 @@
 //      (كتحملهم من بعد chat.js فـindex.html، فهي لي كتبقى الفعلية).
 // ============================================================================
 
+let __notifyMsgsLastError = null;
+let __notifyMsgsLastRefresh = null;
+
 function refreshMsgsBadge() {
   const badge = document.getElementById('msgs-badge');
   let total = 0;
 
   try { if (typeof computeGroupChatUnread === 'function') total += computeGroupChatUnread(); }
-  catch (e) { console.error('[notify-msgs] group unread failed:', e); }
+  catch (e) { console.error('[notify-msgs] group unread failed:', e); __notifyMsgsLastError = 'group unread: ' + e.message; }
 
   try { if (typeof computeTotalPrivateUnread === 'function') total += computeTotalPrivateUnread(); }
-  catch (e) { console.error('[notify-msgs] private unread failed:', e); }
+  catch (e) { console.error('[notify-msgs] private unread failed:', e); __notifyMsgsLastError = 'private unread: ' + e.message; }
 
   try { if (typeof computeTotalExternalUnread === 'function') total += computeTotalExternalUnread(); }
-  catch (e) { console.error('[notify-msgs] external unread failed:', e); }
+  catch (e) { console.error('[notify-msgs] external unread failed:', e); __notifyMsgsLastError = 'external unread: ' + e.message; }
 
   try { if (typeof computeExternalIncomingInvites === 'function') total += computeExternalIncomingInvites().length; }
-  catch (e) { console.error('[notify-msgs] external invites failed:', e); }
+  catch (e) { console.error('[notify-msgs] external invites failed:', e); __notifyMsgsLastError = 'external invites: ' + e.message; }
 
   try { if (typeof computeNewGroupJoinNotifs === 'function') total += computeNewGroupJoinNotifs().length; }
-  catch (e) { console.error('[notify-msgs] group joins failed:', e); }
+  catch (e) { console.error('[notify-msgs] group joins failed:', e); __notifyMsgsLastError = 'group joins: ' + e.message; }
+
+  __notifyMsgsLastRefresh = new Date();
 
   if (badge) {
     if (total > 0) { badge.innerText = total > 9 ? '9+' : String(total); badge.style.display = 'flex'; }
@@ -38,10 +43,31 @@ function refreshMsgsBadge() {
   }
 
   const box = document.getElementById('msgs-center-box');
-  if (box && box.classList.contains('show') && typeof renderMsgsCenter === 'function') {
-    try { renderMsgsCenter(); }
-    catch (e) { console.error('[notify-msgs] renderMsgsCenter failed:', e); }
+  if (box && box.classList.contains('show')) {
+    if (typeof renderMsgsCenter === 'function') {
+      try { renderMsgsCenter(); }
+      catch (e) { console.error('[notify-msgs] renderMsgsCenter failed:', e); __notifyMsgsLastError = 'renderMsgsCenter: ' + e.message; }
+    }
+    renderNotifyMsgsDebugFooter();
   }
+}
+
+// ⚠️ شريط تشخيص مؤقت — كيبين تحت قائمة الإشعارات أرقام الكاش الداخلي وآخر خطأ (إلا كاين)،
+// باش يقدر أي حد يعطيني screenshot بلا ما يحتاج يحل الـconsole. نقدر نمسحوه من بعد ما نأكدو.
+function renderNotifyMsgsDebugFooter() {
+  const box = document.getElementById('msgs-center-content');
+  if (!box) return;
+  const uidOk = (typeof currentUid !== 'undefined' && !!currentUid);
+  const priv = (typeof privateChatsCache !== 'undefined') ? privateChatsCache.length : 'n/a';
+  const grp = (typeof ownedGroupsCache !== 'undefined') ? ownedGroupsCache.length : 'n/a';
+  const extGrp = (typeof externalGroupsCache !== 'undefined') ? externalGroupsCache.length : 'n/a';
+  const extChat = (typeof externalChatsCache !== 'undefined') ? externalChatsCache.length : 'n/a';
+  const time = __notifyMsgsLastRefresh ? __notifyMsgsLastRefresh.toLocaleTimeString() : 'n/a';
+  const err = __notifyMsgsLastError ? __notifyMsgsLastError : 'لا خطأ';
+  const debugHtml = `<div style="margin-top:10px;padding:8px;border-top:1px dashed #64748b;font-size:11px;color:#94a3b8;direction:ltr;text-align:left;">
+    DEBUG • uid:${uidOk ? 'ok' : 'MISSING'} • priv:${priv} • grp:${grp} • extGrp:${extGrp} • extChat:${extChat} • refresh:${time}<br>err: ${err}
+  </div>`;
+  box.innerHTML += debugHtml;
 }
 
 // ⚠️ كتاخد بلاصة الدالة ديال chat.js — كل نداء ليها فباقي الملفات (updateBellNotifications،
