@@ -71,17 +71,6 @@
     applyLanguage();
     applyNotifSettingsSelects();
 
-    // ⚠️ إصلاح: بزاف ديال متصفحات الهاتف كيقطعو الاتصال الدائم (WebSocket) ديال Firestore
-    // ملي التطبيق يبقى فالخلفية (شاشة مسكرة / تبديل لتطبيق آخر)، ومايعاودوش يوصلوه
-    // تلقائيا ملي ترجع للتطبيق — فتبقى كل الـlisteners (إشعارات، رسائل...) "خاصرة" بلا ما
-    // تبان أي error، حتى تسكر التطبيق وتعاود تحلو من جديد. هاد الكود كيجبر Firestore
-    // يعاود يتأكد من الاتصال ملي الصفحة توالي ظاهرة (visible) من جديد.
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && typeof db !== 'undefined' && db) {
-        db.disableNetwork().then(() => db.enableNetwork()).catch(() => {});
-      }
-    });
-
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').catch(() => {});
