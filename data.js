@@ -15,9 +15,12 @@
       dataLoading = { cheques: true, stock: true, installations: true, notes: true };
       renderNavShortcuts();
       if (typeof startAccessListener === 'function') startAccessListener(companyId); // قائمة عمال الشركة + الصلاحيات ديالهم
-      if (typeof startMembersListener === 'function') startMembersListener(companyId); // دليل الأعضاء (بحال الاسم الحالي، الحظر...)
-      if (typeof upsertMember === 'function') upsertMember(); // كنحدثو السمية الحالية فكل دخول، باش ما تبقاش سمية قديمة
-      if (typeof startPrivateChatsListener === 'function') startPrivateChatsListener(companyId); // المحادثات الخاصة + إشعاراتها (بلا هادشي، إشعارات الرسائل الخاصة ماكانتش كتبان غير وقت خلق/الانضمام للشركة)
+      // ⚠️ هاد الثلاثة كانو غير كيتنادو ملي كتخلق/تنضم لشركة (submitCreateCompany/submitJoinCompany)،
+      // ماشي فكل تسجيل دخول عادي — وهادشي كان السبب لي الدردشة الخاصة/الرسائل عمرها ماكانت
+      // كتخدم أو كتبان فالإشعارات غير أول جلسة (بعد refresh/دخول جديد، كانت تبقى فارغة).
+      if (typeof startPrivateChatsListener === 'function') startPrivateChatsListener(companyId);
+      if (typeof startMembersListener === 'function') startMembersListener(companyId);
+      if (typeof initExternalFeatures === 'function') initExternalFeatures();
       db.collection('companies').doc(companyId).collection('cheques').onSnapshot(snapshot => {
         dataLoading.cheques = false;
         if (snapshot.empty) {
@@ -124,14 +127,14 @@
           'املأ النموذج أعلاه واضغط على "+ تسجيل الشيك" لإضافة أول شيك', 'Remplissez le formulaire ci-dessus et appuyez sur "+ Enregistrer le chèque" pour créer le premier'
         );
       } else {
-        list.innerHTML = sortWithPendingLast(globalData.cheques).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="cheques-item-${d.id}">
+        list.innerHTML = sortWithPendingLast(globalData.cheques).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''} ${d.pinned ? 'is-pinned' : ''}" id="cheques-item-${d.id}">
           <div class="item-header"><span class="item-title">#${d.num} - ${d.owner}</span><span class="item-badge">${d.amount} DH</span></div>
           <div class="item-sub">${d.type} | ${d.date ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 3h6M4.5 6l1.5-1.5M19.5 6 18 4.5"/></svg> ' + d.date.replace('T', ' ') : '-'}</div>
           ${formatCreatedInfo(d)}
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('cheques', d)}
           ${renderPendingEditBox('cheques', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditCheque('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('cheques', d.id, t)}</span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;">${pinBtnHtml('cheques', d)}${editBtnHtml('cheques', d.id)}${deleteBtnHtml('cheques', d.id, t)}</span></div>
         </div>`).join('');
       }
       updateNotificationBoxes();
@@ -159,14 +162,14 @@
         list.innerHTML = sortWithPendingLast(globalData.stock).map(d => {
           const isLow = d.minQty && Number(d.qty) <= Number(d.minQty);
           const lowBadge = isLow ? `<span class="stock-low-badge">⚠️ ${currentLang === 'ar' ? 'منخفض' : 'Bas'}</span>` : '';
-          return `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="stock-item-${d.id}">
+          return `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''} ${d.pinned ? 'is-pinned' : ''}" id="stock-item-${d.id}">
           <div class="item-header"><span class="item-title">${d.name}${lowBadge}</span><span class="item-badge">Qty: ${d.qty} | ${d.price || 0} DH</span></div>
           <div class="item-sub">${d.date ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 3h6M4.5 6l1.5-1.5M19.5 6 18 4.5"/></svg> ' + d.date.replace('T', ' ') : '-'}</div>
           ${formatCreatedInfo(d)}
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('stock', d)}
           ${renderPendingEditBox('stock', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditStock('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('stock', d.id, t)}</span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;">${pinBtnHtml('stock', d)}${editBtnHtml('stock', d.id)}${deleteBtnHtml('stock', d.id, t)}</span></div>
         </div>`;
         }).join('');
       }
@@ -198,7 +201,7 @@
             let mapUrl = d.map.startsWith('http') ? d.map : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.map)}`;
             mapButtonHtml = `<a href="${mapUrl}" target="_blank" class="btn-map-link"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4z"/><line x1="9" y1="4" x2="9" y2="17"/><line x1="15" y1="6.5" x2="15" y2="19.5"/></svg> Maps</a>`;
           }
-          return `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="installations-item-${d.id}">
+          return `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''} ${d.pinned ? 'is-pinned' : ''}" id="installations-item-${d.id}">
             <div class="item-header"><span class="item-title">${d.client}</span><span class="item-badge">${d.service}</span></div>
             <div class="item-sub"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.3 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C11.2 21 3 12.8 3 3.7c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1z"/></svg> ${d.phone || '-'} | ${d.clim || '-'}</div>
             <div class="item-sub">${d.date ? '<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 3h6M4.5 6l1.5-1.5M19.5 6 18 4.5"/></svg> ' + d.date.replace('T', ' ') : '-'}${repeatBadgeHtml(d.repeat)}</div>
@@ -206,7 +209,7 @@
           ${formatUpdateInfo(d)}
             ${renderPreviousValueBox('installations', d)}
             ${renderPendingEditBox('installations', d)}
-            <div class="item-actions">${mapButtonHtml}<span style="display:flex; gap:8px;"><button class="btn-map-link" onclick="printServiceCertificate('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg> ${currentLang === 'ar' ? 'طباعة شهادة' : 'Certificat'}</button><button class="btn-edit" onclick="startEditInstallation('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('installations', d.id, t)}</span></div>
+            <div class="item-actions">${mapButtonHtml}<span style="display:flex; gap:8px;">${pinBtnHtml('installations', d)}<button class="btn-map-link" onclick="printServiceCertificate('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg> ${currentLang === 'ar' ? 'طباعة شهادة' : 'Certificat'}</button>${editBtnHtml('installations', d.id)}${deleteBtnHtml('installations', d.id, t)}</span></div>
           </div>`;
         }).join('');
       }
@@ -231,14 +234,14 @@
           'املأ النموذج أعلاه واضغط على "+ حفظ الملاحظة" لإضافة أول ملاحظة', 'Remplissez le formulaire ci-dessus et appuyez sur "+ Enregistrer la note" pour créer la première'
         );
       } else {
-        list.innerHTML = sortWithPendingLast(globalData.notes).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''}" id="notes-item-${d.id}">
+        list.innerHTML = sortWithPendingLast(globalData.notes).map(d => `<div class="item-card ${d.pendingEdit ? 'has-pending-edit' : ''} ${d.pinned ? 'is-pinned' : ''}" id="notes-item-${d.id}">
           <div class="item-title" style="white-space: pre-wrap;">${d.text}</div>
           ${d.datetime ? `<div class="item-sub"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 3h6M4.5 6l1.5-1.5M19.5 6 18 4.5"/></svg> ${d.datetime.replace('T', ' ')}${repeatBadgeHtml(d.repeat)}</div>` : ''}
           ${formatCreatedInfo(d)}
           ${formatUpdateInfo(d)}
           ${renderPreviousValueBox('notes', d)}
           ${renderPendingEditBox('notes', d)}
-          <div class="item-actions"><span></span><span style="display:flex; gap:8px;"><button class="btn-edit" onclick="startEditNote('${d.id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>${deleteBtnHtml('notes', d.id, t)}</span></div>
+          <div class="item-actions"><span></span><span style="display:flex; gap:8px;">${pinBtnHtml('notes', d)}${editBtnHtml('notes', d.id)}${deleteBtnHtml('notes', d.id, t)}</span></div>
         </div>`).join('');
       }
       updateNotificationBoxes();
@@ -340,8 +343,9 @@
 
     function addCheque() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('cheques')) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل الشيكات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les chèques, contactez l'administrateur.");
+      const chqAction = editingItem.cheques ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('cheques', chqAction)) {
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل الشيكات، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les chèques, contactez l'administrateur.");
         return;
       }
       const num = document.getElementById('chk-num').value.trim();
@@ -362,8 +366,9 @@
 
     function addStockItem() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('stock')) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل المخزون، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier le stock, contactez l'administrateur.");
+      const stkAction = editingItem.stock ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('stock', stkAction)) {
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل المخزون، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier le stock, contactez l'administrateur.");
         return;
       }
       const name = document.getElementById('item-name').value.trim();
@@ -384,8 +389,9 @@
 
     function addInstallation() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('installations')) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل التركيب/الخدمات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les installations/services, contactez l'administrateur.");
+      const instAction = editingItem.installations ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('installations', instAction)) {
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل التركيب/الخدمات، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les installations/services, contactez l'administrateur.");
         return;
       }
       const client = document.getElementById('client-name').value.trim();
@@ -408,8 +414,9 @@
 
     function addNote() {
       if (!currentUid) return;
-      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('notes')) {
-        alert(currentLang === 'ar' ? 'ماعندكش الصلاحية باش تزيد أو تعدل الملاحظات، تواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les notes, contactez l'administrateur.");
+      const noteAction = editingItem.notes ? 'edit' : 'add';
+      if (typeof hasSectionPermission === 'function' && !hasSectionPermission('notes', noteAction)) {
+        alert(currentLang === 'ar' ? 'ليست لديك صلاحية إضافة أو تعديل الملاحظات، يرجى التواصل مع المسؤول.' : "Vous n'avez pas la permission d'ajouter ou modifier les notes, contactez l'administrateur.");
         return;
       }
       const text = document.getElementById('note-text').value.trim();
@@ -472,14 +479,24 @@
 
     setInterval(advanceRecurringItems, 60000);
 
+    function editBtnHtml(col, id) {
+      const canEdit = typeof hasSectionPermission === 'function' ? hasSectionPermission(col, 'edit') : isCurrentUserAdmin();
+      if (!canEdit) return '';
+      const fnMap = { cheques: 'startEditCheque', stock: 'startEditStock', installations: 'startEditInstallation', notes: 'startEditNote' };
+      const fn = fnMap[col];
+      return `<button class="btn-edit" onclick="${fn}('${id}')"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>`;
+    }
+
     function deleteBtnHtml(col, id, t) {
-      return isCurrentUserAdmin() ? `<button class="btn-delete" onclick="deleteItem('${col}','${id}')">${t.delBtn}</button>` : '';
+      const canDelete = typeof hasSectionPermission === 'function' ? hasSectionPermission(col, 'delete') : isCurrentUserAdmin();
+      return canDelete ? `<button class="btn-delete" onclick="deleteItem('${col}','${id}')">${t.delBtn}</button>` : '';
     }
 
     function deleteItem(col, id) {
       if (!currentCompanyId) return;
-      if (!isCurrentUserAdmin()) {
-        alert(currentLang === 'ar' ? 'الحذف متاح فقط للمسؤول، تواصل معه.' : "La suppression est réservée à l'administrateur, contactez-le.");
+      const canDelete = typeof hasSectionPermission === 'function' ? hasSectionPermission(col, 'delete') : isCurrentUserAdmin();
+      if (!canDelete) {
+        alert(currentLang === 'ar' ? 'ماعندكش صلاحية الحذف فهاد القسم، تواصل مع المسؤول.' : "Vous n'avez pas la permission de supprimer dans cette section, contactez l'administrateur.");
         return;
       }
       if (confirm(currentLang === 'ar' ? "هل أنت متأكد من الحذف؟\nÊtes-vous sûr de vouloir supprimer ?" : "Êtes-vous sûr de vouloir supprimer ?\nهل أنت متأكد من الحذف؟")) { 
@@ -526,7 +543,7 @@
       if (opsInBatch > 0) commits.push(batch.commit());
 
       if (fixedCount === 0) {
-        alert(currentLang === 'ar' ? 'لا يوجد أي عنصر بحاجة إلى إصلاح.' : 'Aucun élément à corriger.');
+        alert(currentLang === 'ar' ? 'لا يوجد أي عنصر بحاجة إلى تصحيح.' : 'Aucun élément à corriger.');
         return;
       }
       Promise.all(commits).then(() => {
@@ -662,7 +679,9 @@
       printWindow.document.close();
     }
 
-    function printPDFReport() {
+    function printPDFReport(lang) {
+      const originalLang = currentLang;
+      if (lang && lang !== currentLang) currentLang = lang; // لغة التقرير مؤقتاً غير، بلا ما نبدلو لغة التطبيق نهائياً
       let printWindow = window.open('', '_blank');
       let htmlContent = `
         <html lang="${currentLang}" dir="${translations[currentLang].dir}">
@@ -704,5 +723,19 @@
       `;
       printWindow.document.write(htmlContent);
       printWindow.document.close();
+      currentLang = originalLang;
+    }
+
+    function openPrintLangModal() {
+      document.getElementById('print-lang-modal').classList.add('show');
+    }
+
+    function closePrintLangModal() {
+      document.getElementById('print-lang-modal').classList.remove('show');
+    }
+
+    function generatePDFReport(lang) {
+      closePrintLangModal();
+      printPDFReport(lang);
     }
 
