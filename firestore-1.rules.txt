@@ -126,10 +126,52 @@ service cloud.firestore {
     }
 
     // ============================================================
-    // ملاحظة: groups/{id}, codeDirectory, emailDirectory,
-    // externalInvites, externalChats → نظام دردشة الكروبات/الخارجي
-    // كيبقى خارج نطاق هاد التغيير حاليا (خاصو Rules ديالو القديمة
-    // تبقى كيفما هي، ماشي مربوطة بـcompanyId)
+    // ⚠️ مؤقت! collections قديمة (من قبل نظام الشركات) بحقل userId —
+    // خاصهم يتقراو مرة وحدة باش يتنقلو لـcompanies/{companyId}/... عبر
+    // migrateOldPersonalDataToCompany(). القراءة محدودة لصاحب البيانات
+    // نفسو، ما فيهاش خطر أمني حتى لو خليناها.
     // ============================================================
+    match /cheques/{id} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    match /stock/{id} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    match /installations/{id} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    match /notes/{id} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================================
+    // groups/{id} + codeDirectory/emailDirectory/externalInvites/externalChats
+    // → نظام دردشة الكروبات والدردشة الخارجية، خارج نطاق نظام الشركات
+    // (ماشي مربوط بـcompanyId). أي مستخدم مسجل الدخول عندو الصلاحية.
+    // ⚠️ هاد الجزء كان ناقص تماما فالنسخة المنشورة، يعني الدردشة الجماعية/الخارجية
+    // كانت محجوبة بالكامل (Firestore كيرفض بالافتراضي أي بلاصة بلا قاعدة صريحة).
+    // ============================================================
+    match /groups/{groupId} {
+      allow read, write: if isSignedIn();
+      match /messages/{msgId} {
+        allow read, create: if isSignedIn() &&
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.get('allAuthorizedUids', []);
+      }
+    }
+    match /codeDirectory/{code} {
+      allow read, write: if isSignedIn();
+    }
+    match /emailDirectory/{email} {
+      allow read, write: if isSignedIn();
+    }
+    match /externalInvites/{id} {
+      allow read, write: if isSignedIn();
+    }
+    match /externalChats/{chatKey} {
+      allow read, write: if isSignedIn();
+      match /messages/{msgId} {
+        allow read, write: if isSignedIn();
+      }
+    }
   }
 }

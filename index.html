@@ -681,6 +681,7 @@
           <button class="btn-pdf" style="background:#eab308;" onclick="requestNotificationPermission()" id="btn-notif-txt"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3a5 5 0 0 0-5 5v3.3L5.2 15h13.6L17 11.3V8a5 5 0 0 0-5-5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg> تفعيل إشعارات الهاتف</button>
           <button class="btn-pdf" onclick="printPDFReport()" id="btn-pdf-txt"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg> طباعة تقرير PDF شامل</button>
           <button class="btn-pdf" style="background:#334155; border:1px solid #38bdf8; color:#38bdf8;" onclick="fixOldUpdatedByNames()"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 3v5h5"/></svg> إصلاح أسماء "آخر تعديل" القديمة</button>
+          <button class="btn-pdf" style="background:#334155; border:1px solid #4ade80; color:#4ade80;" onclick="migrateOldPersonalDataToCompany()"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg> نقل البيانات القديمة (من قبل نظام الشركات) لهاد الشركة</button>
           <button class="btn-danger-all" onclick="confirmAndDeleteEverything()" id="btn-del-all-txt"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3 2 20h20z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="17" r="0.7" fill="currentColor" stroke="none"/></svg> مسح جميع بيانات الحساب نهائياً</button>
         </div>
         <div class="card">
@@ -724,6 +725,7 @@
   <script src="core.js"></script>
   <script src="groups.js"></script>
   <script src="chat.js"></script>
+  <script src="private-chat.js"></script>
   <script src="ui.js"></script>
   <script src="nav.js"></script>
   <script src="data.js"></script>

@@ -554,6 +554,61 @@
       });
     }
 
+    // ⚠️ نظام مؤقت: قبل نظام الشركات، كانت البيانات (شيكات/مخزون/تركيب/ملاحظات) مخزّنة
+    // فcollections فالمستوى الأعلى (cheques, stock, installations, notes) بحقل userId،
+    // ماشي تحت companies/{companyId}/... هاد الدالة كتنقلها مرة وحدة للشركة الحالية.
+    // كتحتاج قاعدة أمان مؤقتة (allow read: if resource.data.userId == request.auth.uid)
+    // على الـcollections القديمة باش تقدر تقراهم.
+    function migrateOldPersonalDataToCompany() {
+      if (!currentUid || !currentCompanyId) return;
+      if (!isCurrentUserAdmin()) {
+        alert(currentLang === 'ar' ? 'هذا الإجراء متاح فقط للمسؤول.' : "Cette action est réservée à l'administrateur.");
+        return;
+      }
+      const migFlagRef = db.collection('companies').doc(currentCompanyId).collection('settings').doc('migration');
+      migFlagRef.get().then(flagDoc => {
+        if (flagDoc.exists && flagDoc.data().oldDataMigrated) {
+          if (!confirm(currentLang === 'ar' ? 'البيانات القديمة تم نقلها من قبل لهاد الشركة. هل تريد إعادة المحاولة؟ (قد يتسبب في تكرار العناصر)' : 'Les anciennes données ont déjà été migrées vers cette société. Réessayer ? (risque de doublons)')) return;
+        }
+        if (!confirm(currentLang === 'ar' ? 'سيقوم هذا الإجراء بنسخ البيانات القديمة (الشيكات، المخزون، التركيب/الخدمات، الملاحظات) المرتبطة بحسابك لهاد الشركة. هل أنت متأكد؟' : 'Cette action va copier vos anciennes données (chèques, stock, installations, notes) vers cette société. Continuer ?')) return;
+
+        const collections = ['cheques', 'stock', 'installations', 'notes'];
+        let totalMigrated = 0;
+        const work = collections.map(col => {
+          return db.collection(col).where('userId', '==', currentUid).get().then(snap => {
+            if (snap.empty) return;
+            let batch = db.batch();
+            let opsInBatch = 0;
+            const commits = [];
+            snap.forEach(doc => {
+              const d = { ...doc.data() };
+              delete d.userId;
+              const newRef = db.collection('companies').doc(currentCompanyId).collection(col).doc();
+              batch.set(newRef, d);
+              totalMigrated++;
+              opsInBatch++;
+              if (opsInBatch >= 400) {
+                commits.push(batch.commit());
+                batch = db.batch();
+                opsInBatch = 0;
+              }
+            });
+            if (opsInBatch > 0) commits.push(batch.commit());
+            return Promise.all(commits);
+          });
+        });
+
+        Promise.all(work).then(() => {
+          return migFlagRef.set({ oldDataMigrated: true, migratedAt: new Date().toISOString(), migratedCount: totalMigrated }, { merge: true });
+        }).then(() => {
+          alert(currentLang === 'ar' ? `تم نقل ${totalMigrated} عنصر بنجاح! أعد فتح التطبيق للتأكد.` : `${totalMigrated} élément(s) migré(s) avec succès ! Rouvrez l'application pour vérifier.`);
+        }).catch(err => {
+          console.error('migrateOldPersonalDataToCompany error:', err);
+          showSaveError(err);
+        });
+      });
+    }
+
     function confirmAndDeleteEverything() {
       if (!currentCompanyId) return;
       if (!isCurrentUserAdmin()) {
