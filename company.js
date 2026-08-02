@@ -165,19 +165,24 @@
     function generateNewInviteCode() {
       if (currentUserRole !== 'admin' || !currentCompanyId) return;
       const code = generateInviteCodeString();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // صالح 24 ساعة غير
-      db.collection('inviteCodes').doc(code).set({
-        companyId: currentCompanyId,
-        createdBy: currentUid,
-        used: false,
-        expiresAt,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).then(() => {
-        document.getElementById('ci-invite-code').textContent = code;
-      }).catch(err => {
-        console.error('generateInviteCode error:', err);
-        alert(currentLang === 'ar' ? 'حدث خطأ أثناء توليد الكود، حاول مرة أخرى.' : "Une erreur s'est produite, réessayez.");
-      });
+      const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000); // صالح ساعتين غير
+      // نلغيو كل الأكواد القديمة اللي مازال نشيطة (ماتستعملاتش) قبل ما نزيدو الكود الجديد،
+      // باش يبقى غير كود واحد صالح فكل مرة (كنقرأو مباشرة من Firestore عوض الكاش، حيت الكاش
+      // يقدر ما يكونش تعمر بعد ملي كتفتح المودال لأول مرة)
+      db.collection('inviteCodes').where('companyId', '==', currentCompanyId).where('used', '==', false).get()
+        .then(snap => Promise.all(snap.docs.map(d => d.ref.delete().catch(() => {}))))
+        .then(() => db.collection('inviteCodes').doc(code).set({
+          companyId: currentCompanyId,
+          createdBy: currentUid,
+          used: false,
+          expiresAt,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        })).then(() => {
+          document.getElementById('ci-invite-code').textContent = code;
+        }).catch(err => {
+          console.error('generateInviteCode error:', err);
+          alert(currentLang === 'ar' ? 'حدث خطأ أثناء توليد الكود، حاول مرة أخرى.' : "Une erreur s'est produite, réessayez.");
+        });
     }
 
     // ---------------- الأكواد النشيطة (مازال ما تستعملوش) + إلغاء ----------------
@@ -329,9 +334,10 @@
         return;
       }
       const newRole = isAdmin ? 'member' : 'admin';
+      const empName = m.name || (currentLang === 'ar' ? 'هذا العامل' : 'cet employé');
       if (!confirm(currentLang === 'ar'
-        ? (isAdmin ? 'تنزيل هذا العامل من مسؤول إلى عامل عادي؟' : 'ترقية هذا العامل إلى مسؤول؟ سيحصل على كامل الصلاحيات وقدرة إدارة العمال.')
-        : (isAdmin ? 'Rétrograder cet employé en "Employé" ?' : 'Promouvoir cet employé en "Administrateur" ? Il obtiendra tous les droits et la gestion des employés.'))) return;
+        ? (isAdmin ? `هل تريد تنحية ${empName} عن منصب مسؤول؟` : `ترقية ${empName} إلى مسؤول؟ سيحصل على كامل الصلاحيات وقدرة إدارة العمال.`)
+        : (isAdmin ? `Voulez-vous retirer ${empName} du poste d'administrateur ?` : `Promouvoir ${empName} en "Administrateur" ? Il obtiendra tous les droits et la gestion des employés.`))) return;
       db.collection('companies').doc(currentCompanyId).collection('access').doc(uid).set({ role: newRole }, { merge: true }).catch(err => console.error('toggleAccessRole error:', err));
     }
 
