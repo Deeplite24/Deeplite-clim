@@ -110,6 +110,10 @@
       box.innerHTML = groups.slice().sort((a, b) => (b.lastMessageAt || '').localeCompare(a.lastMessageAt || '')).map(g => {
         const key = myGroupSenderKey(g);
         const unread = (g.unread && key && g.unread[key]) || 0;
+        const isOwner = g.ownerUid === currentUid;
+        const ownerBtns = isOwner ? `
+          <button class="emp-icon-btn emp-icon-btn-gray" title="${currentLang === 'ar' ? 'تعديل الاسم' : 'Renommer'}" onclick="event.stopPropagation(); renameGroup('${g.id}')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>
+          <button class="emp-icon-btn emp-icon-btn-red" title="${currentLang === 'ar' ? 'حذف المجموعة' : 'Supprimer'}" onclick="event.stopPropagation(); deleteGroupConfirm('${g.id}')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V4.5h6V7M7 7l1 12.5h8L17 7"/></svg></button>` : '';
         return `<div class="members-list-item" onclick="openGroupChat('${g.id}')">
           <div class="members-list-avatar"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="8.5" cy="8" r="3"/><circle cx="16.2" cy="9" r="2.6"/><path d="M3 19c.7-3 3-4.8 5.7-4.8S13.8 16 14.5 19"/><path d="M14.9 14.5c2.1.4 3.6 1.9 4.1 4.4"/></svg></div>
           <div class="members-list-info">
@@ -117,8 +121,27 @@
             <div class="members-list-preview">${g.lastMessage ? escapeChatText(g.lastMessage) : (currentLang === 'ar' ? 'ابدأ الدردشة' : 'Démarrer la discussion')}</div>
           </div>
           ${unread > 0 ? `<span class="members-list-badge">${unread > 9 ? '9+' : unread}</span>` : ''}
+          ${ownerBtns ? `<span style="display:flex; gap:4px; margin-inline-start:6px;">${ownerBtns}</span>` : ''}
         </div>`;
       }).join('');
+    }
+
+    // إعادة تسمية أو حذف مجموعة: متاحة غير لصاحبها الأصلي (اللي خلقها)
+    function renameGroup(groupId) {
+      const g = findGroupById(groupId);
+      if (!g || g.ownerUid !== currentUid) return;
+      const newName = prompt(currentLang === 'ar' ? 'الاسم الجديد للمجموعة:' : 'Nouveau nom du groupe :', g.name || '');
+      if (newName === null) return;
+      const trimmed = newName.trim();
+      if (!trimmed) return;
+      db.collection('groups').doc(groupId).update({ name: trimmed }).catch(showSaveError);
+    }
+
+    function deleteGroupConfirm(groupId) {
+      const g = findGroupById(groupId);
+      if (!g || g.ownerUid !== currentUid) return;
+      if (!confirm(currentLang === 'ar' ? `هل تريد حذف مجموعة "${g.name || ''}" نهائياً؟ سيتم حذف كل رسائلها ولن يقدر الأعضاء يوصلو ليها بعد.` : `Supprimer définitivement le groupe "${g.name || ''}" ? Tous ses messages seront perdus et les membres n'y auront plus accès.`)) return;
+      db.collection('groups').doc(groupId).delete().catch(showSaveError);
     }
 
     function openCreateGroupModal() {
