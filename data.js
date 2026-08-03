@@ -112,23 +112,6 @@
       document.getElementById('stat-low-stock-lbl').textContent = l.low;
     }
 
-    // 🔴 PERM-DEBUG: كتبين الصلاحيات الحقيقية المخزنة للحساب الحالي (غير للأعضاء العاديين)
-    // باش نقدرو نشوفو واش hasSectionPermission كيقرا الصلاحيات مزيان بعد ما يبدلها المسؤول
-    function updatePermDebugBar() {
-      const bar = document.getElementById('perm-debug-bar');
-      if (!bar) return;
-      if (isCurrentUserAdmin()) { bar.style.display = 'none'; return; }
-      const sections = ['cheques', 'stock', 'installations', 'notes'];
-      const parts = sections.map(s => {
-        const add = typeof hasSectionPermission === 'function' ? hasSectionPermission(s, 'add') : '?';
-        const edit = typeof hasSectionPermission === 'function' ? hasSectionPermission(s, 'edit') : '?';
-        const del = typeof hasSectionPermission === 'function' ? hasSectionPermission(s, 'delete') : '?';
-        return s + ':A' + (add ? 1 : 0) + 'E' + (edit ? 1 : 0) + 'D' + (del ? 1 : 0);
-      });
-      bar.innerText = 'PERM-DEBUG • ' + parts.join(' • ') + ' • ' + new Date().toLocaleTimeString();
-      bar.style.display = 'block';
-    }
-
     function renderChequesListUI() {
       const t = translations[currentLang];
       const list = document.getElementById('cheques-list');
@@ -158,7 +141,6 @@
       showPersistentRemindersNotification();
       applySearchFilter('cheques');
       updateBellNotifications();
-      updatePermDebugBar();
       renderHomeStats();
     }
 
@@ -195,7 +177,6 @@
       showPersistentRemindersNotification();
       applySearchFilter('stock');
       updateBellNotifications();
-      updatePermDebugBar();
       renderHomeStats();
     }
 
@@ -236,7 +217,6 @@
       showPersistentRemindersNotification();
       applySearchFilter('installations');
       updateBellNotifications();
-      updatePermDebugBar();
     }
 
     function renderNotesListUI() {
@@ -268,7 +248,6 @@
       showPersistentRemindersNotification();
       applySearchFilter('notes');
       updateBellNotifications();
-      updatePermDebugBar();
     }
 
     // ==================== Edit Mode ====================
