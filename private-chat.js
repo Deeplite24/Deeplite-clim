@@ -29,6 +29,7 @@
         .onSnapshot(snap => {
           privateChatsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderPrivateChatList();
+          if (currentPrivateChatWith) renderPrivateMessages();
           updateBellNotifications();
           if (typeof updateChatUnreadBadge === 'function') updateChatUnreadBadge();
           __directPrivateDebugUpdate();
@@ -165,19 +166,31 @@
         return;
       }
       const myId = currentUid;
+      const otherId = currentPrivateChatWith;
+      const key = otherId ? privateChatKey(myId, otherId) : null;
+      const conv = key ? privateChatsCache.find(c => c.id === key) : null;
+      const otherSeenAt = (conv && conv.lastSeenAt && otherId && conv.lastSeenAt[otherId] && conv.lastSeenAt[otherId].toDate) ? conv.lastSeenAt[otherId].toDate() : null;
       box.innerHTML = privateMsgsCache.map(m => {
         const mine = m.senderId === myId;
         const avatarHtml = m.senderAvatarIsPhoto && m.senderAvatar ? `<img src="${m.senderAvatar}">` : (m.senderAvatar || '🙂');
         let timeStr = '';
+        let msgDate = null;
         try {
-          if (m.createdAt && m.createdAt.toDate) timeStr = formatTimeShort(m.createdAt.toDate());
+          if (m.createdAt && m.createdAt.toDate) { msgDate = m.createdAt.toDate(); timeStr = formatTimeShort(msgDate); }
         } catch (e) {}
+        let seenTick = '';
+        if (mine) {
+          const seen = !!(msgDate && otherSeenAt && otherSeenAt >= msgDate);
+          seenTick = seen
+            ? `<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-start:3px" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12l4.5 4.5L15 8"/><path d="M9 12l4.5 4.5L22 8"/></svg>`
+            : `<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-start:3px" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l4.5 4.5L17 7"/></svg>`;
+        }
         return `
           <div class="chat-msg-row ${mine ? 'mine' : ''}">
             <div class="chat-avatar clickable" onclick="showMemberInfo('${m.senderId}')">${avatarHtml}</div>
             <div class="chat-bubble-col">
               <div class="chat-bubble">${escapeChatText(m.text || '')}</div>
-              <div class="chat-meta-row">${timeStr}</div>
+              <div class="chat-meta-row">${timeStr}${seenTick}</div>
             </div>
           </div>`;
       }).join('');
@@ -232,6 +245,7 @@
       const key = privateChatKey(myId, otherId);
       const update = {};
       update['unread.' + myId] = 0;
+      update['lastSeenAt.' + myId] = firebase.firestore.FieldValue.serverTimestamp();
       db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key).set(update, { merge: true }).catch(() => {});
     }
 
