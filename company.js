@@ -379,10 +379,46 @@
       const box = document.getElementById('company-employees-list');
       if (!box) return;
       const iAmAdmin = isCurrentUserAdmin();
+      const subEl = document.getElementById('company-emp-sub-t');
+
+      // عامل عادي (ماشي مسؤول): نعطيوه لائحة مبسطة للقراءة فقط — كيشوف المسؤول (وباقي
+      // العمال) بأيقونة/بادج توضح الدور، والاسم كيتبدل live (كيجي من companyAccessCache
+      // اللي كيتجدد فالوقت الحقيقي عبر startAccessListener) — بلا أزرار إدارة (ترقية/حظر/صلاحيات)،
+      // غير زر "دردشة خاصة" باش يقدر يبعث رسالة مباشرة (خصوصاً للمسؤول).
       if (!iAmAdmin) {
-        box.innerHTML = `<div class="chat-empty">${currentLang === 'ar' ? 'هذا القسم متاح فقط للمسؤول.' : "Cette section est réservée à l'administrateur."}</div>`;
+        if (subEl) subEl.innerHTML = currentLang === 'ar'
+          ? 'هنا تشوف المسؤول وباقي العمال فالشركة، ويمكنك مراسلة أي واحد منهم بشكل خاص.'
+          : "Vous voyez ici l'administrateur et les autres employés de l'entreprise, et pouvez leur écrire en privé.";
+
+        const others = companyAccessCache.filter(m => m.id !== currentUid);
+        if (!others.length) {
+          box.innerHTML = `<div class="chat-empty">${currentLang === 'ar' ? 'لا يوجد أي عامل آخر بعد.' : "Aucun autre employé pour l'instant."}</div>`;
+          return;
+        }
+
+        box.innerHTML = others.map(m => {
+          const mIsAdmin = m.role === 'admin';
+          const blocked = !!m.blocked;
+          const roleBadge = `<span class="emp-name-badge ${mIsAdmin ? 'emp-name-badge-blue' : 'emp-name-badge-gray'}">${mIsAdmin
+            ? `<svg viewBox="0 0 24 24" width="12" height="12" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18h16M5 18l1.2-9L9 12l3-6 3 6 2.8-3 1.2 9"/></svg>${currentLang === 'ar' ? 'مسؤول' : 'Administrateur'}`
+            : (currentLang === 'ar' ? 'عامل عادي' : 'Employé')}</span>`;
+          const blockedBadge = blocked ? `<span class="emp-name-badge emp-name-badge-red">${currentLang === 'ar' ? 'محظور' : 'Bloqué'}</span>` : '';
+          const chatBtn = `<button class="emp-icon-btn emp-icon-btn-blue" title="${currentLang === 'ar' ? 'دردشة خاصة' : 'Chat privé'}" onclick="openPrivateChat('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 6l9 7 9-7"/></svg></button>`;
+          return `<div class="emp-item ${blocked ? 'emp-blocked' : ''}">
+            <div class="emp-top-row" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <div class="members-list-info">
+                <div class="members-list-name">${m.name || (currentLang === 'ar' ? 'عامل' : 'Employé')}</div>
+                ${roleBadge} ${blockedBadge}
+              </div>
+              <div class="emp-icon-actions" style="display:flex; gap:6px;">${chatBtn}</div>
+            </div>
+          </div>`;
+        }).join('');
         return;
       }
+      // مسؤول: كنرجعو للعنوان الفرعي الأصلي (فحالة تمت ترقيته دابا فهاد الجلسة)
+      if (subEl && typeof translations !== 'undefined' && translations[currentLang]) subEl.innerHTML = translations[currentLang].companyEmpSubT;
+
       const others = companyAccessCache.filter(m => m.id !== currentUid);
 
       if (!others.length) {
