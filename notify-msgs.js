@@ -24,19 +24,26 @@ function refreshMsgsBadge() {
   __notifyMsgsBadgeFound = !!badge;
   let total = 0;
 
-  try { if (typeof computeGroupChatUnread === 'function') total += computeGroupChatUnread(); }
+  // ⚠️ safeNum: كل قيمة كتزاد لل total كتعدي من هنا — إلا رجعت شي حاجة ماشي رقم صحيح
+  // (undefined/NaN بسبب خطأ فدالة واحدة)، كنبدلوها بـ0 عوض ما نخليوها تفسد total كاملة.
+  // هادشي هو لي كان واقع: computeExternalIncomingInvites() كانت كترجع رقم ديجا، وكنا
+  // كنزيدو ليها .length مرة أخرى (رقم معندوش .length → undefined → NaN → total كاملة NaN
+  // → total > 0 ديما false → الشارة ديما مخبية، حتى ولو كاين إشعارات حقيقيين).
+  const safeNum = (v) => (typeof v === 'number' && !isNaN(v)) ? v : 0;
+
+  try { if (typeof computeGroupChatUnread === 'function') total += safeNum(computeGroupChatUnread()); }
   catch (e) { console.error('[notify-msgs] group unread failed:', e); __notifyMsgsLastError = 'group unread: ' + e.message; }
 
-  try { if (typeof computeTotalPrivateUnread === 'function') total += computeTotalPrivateUnread(); }
+  try { if (typeof computeTotalPrivateUnread === 'function') total += safeNum(computeTotalPrivateUnread()); }
   catch (e) { console.error('[notify-msgs] private unread failed:', e); __notifyMsgsLastError = 'private unread: ' + e.message; }
 
-  try { if (typeof computeTotalExternalUnread === 'function') total += computeTotalExternalUnread(); }
+  try { if (typeof computeTotalExternalUnread === 'function') total += safeNum(computeTotalExternalUnread()); }
   catch (e) { console.error('[notify-msgs] external unread failed:', e); __notifyMsgsLastError = 'external unread: ' + e.message; }
 
-  try { if (typeof computeExternalIncomingInvites === 'function') total += computeExternalIncomingInvites().length; }
+  try { if (typeof computeExternalIncomingInvites === 'function') total += safeNum(computeExternalIncomingInvites()); }
   catch (e) { console.error('[notify-msgs] external invites failed:', e); __notifyMsgsLastError = 'external invites: ' + e.message; }
 
-  try { if (typeof computeNewGroupJoinNotifs === 'function') total += computeNewGroupJoinNotifs().length; }
+  try { if (typeof computeNewGroupJoinNotifs === 'function') total += safeNum(computeNewGroupJoinNotifs().length); }
   catch (e) { console.error('[notify-msgs] group joins failed:', e); __notifyMsgsLastError = 'group joins: ' + e.message; }
 
   __notifyMsgsLastRefresh = new Date();
