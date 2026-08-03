@@ -193,17 +193,36 @@
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
       parentRef.collection('messages').add(msg).then(() => {
-        const update = {
+        const flatUpdate = {
           participants: firebase.firestore.FieldValue.arrayUnion(myId, otherId),
           lastMessage: text,
           lastMessageAt: new Date().toISOString(),
           lastSenderId: myId
         };
-        update['unread.' + otherId] = firebase.firestore.FieldValue.increment(1);
-        update['unread.' + myId] = 0;
-        parentRef.set(update, { merge: true }).catch(err => {
-          console.error('sendPrivateMessage unread update error:', err);
-          showSaveError(err);
+        flatUpdate['unread.' + otherId] = firebase.firestore.FieldValue.increment(1);
+        flatUpdate['unread.' + myId] = 0;
+        // ⚠️ .update() هي لي كتخدم صحيح مع المفاتيح المنقطة (unread.uid) — كتبني nested map
+        // صحيح. .set(merge:true) بلا حال ماكانتش خدامة بحال .update()، وهادشي كان السبب
+        // الحقيقي لي إشعارات الرسائل الخاصة عمرها ماكانت كتحدث. .update() كتخصر غير كاين
+        // الوثيقة من قبل — إلا كانت أول رسالة (الوثيقة مازال ماكاينة)، كنرجعو لـ.set() بـ
+        // structure متداخل بشكل صريح (بلا نقط) باش نضمنو النتيجة.
+        parentRef.update(flatUpdate).catch(err => {
+          if (err.code === 'not-found') {
+            const nestedUpdate = {
+              participants: [myId, otherId],
+              lastMessage: text,
+              lastMessageAt: new Date().toISOString(),
+              lastSenderId: myId,
+              unread: { [otherId]: 1, [myId]: 0 }
+            };
+            parentRef.set(nestedUpdate, { merge: true }).catch(err2 => {
+              console.error('[DeepliteClim] sendPrivateMessage initial set failed:', err2);
+              showSaveError(err2);
+            });
+          } else {
+            console.error('[DeepliteClim] sendPrivateMessage unread update failed:', err);
+            showSaveError(err);
+          }
         });
         input.value = '';
         scrollPrivateChatToBottom();
@@ -220,7 +239,9 @@
       const update = {};
       update['unread.' + myId] = 0;
       update['lastSeenAt.' + myId] = firebase.firestore.FieldValue.serverTimestamp();
-      db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key).set(update, { merge: true }).catch(() => {});
+      db.collection('companies').doc(currentCompanyId).collection('privateChats').doc(key).update(update).catch(err => {
+        console.error('[DeepliteClim] markPrivateChatSeen failed:', err);
+      });
     }
 
     function scrollPrivateChatToBottom() {
