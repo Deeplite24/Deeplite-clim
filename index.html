@@ -74,6 +74,14 @@
         <h2 id="cs-main-title">شركة <span>جديدة</span></h2>
         <p id="cs-desc">أنشئ شركة جديدة، أو انضم إلى شركة موجودة بكود الدعوة الذي أعطاك إياه المسؤول الخاص بها</p>
 
+        <div style="text-align:center; margin-bottom:14px;">
+          <div id="cs-logo-preview" onclick="document.getElementById('cs-logo-input').click()" style="width:76px; height:76px; border-radius:18px; background:#1e293b; border:2px dashed #475569; display:flex; align-items:center; justify-content:center; margin:0 auto; cursor:pointer; overflow:hidden;">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#64748b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="12" cy="14" r="3.3"/></svg>
+          </div>
+          <input type="file" accept="image/*" id="cs-logo-input" style="display:none;" onchange="handleCompanyLogoUpload(event)">
+          <div style="font-size:11px; color:#94a3b8; margin-top:6px;" id="cs-logo-hint">شعار الشركة (اختياري)</div>
+        </div>
+
         <input type="text" id="cs-company-name" class="auth-input" placeholder="اسم الشركة">
         <button class="btn-login-main" onclick="submitCreateCompany()" id="cs-create-btn">خلق الشركة</button>
 
@@ -672,6 +680,11 @@
 
       <!-- Settings -->
       <div id="settings-section" class="section-page">
+        <div class="card" id="company-brand-card" style="display:none; text-align:center;">
+          <div id="company-brand-logo" style="width:64px; height:64px; border-radius:16px; background:#1e293b; margin:0 auto 8px; overflow:hidden; display:flex; align-items:center; justify-content:center;"></div>
+          <div id="company-brand-name" style="font-size:15px; font-weight:800;"></div>
+          <button class="btn-pdf" style="background:#334155; color:#38bdf8; margin-top:10px; display:none;" id="btn-edit-company-brand" onclick="openEditCompanyBrand()"><svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg> <span id="btn-edit-company-brand-txt">تعديل اسم/شعار الشركة</span></button>
+        </div>
         <div class="card">
           <h2 id="set-t"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M4.2 12H6.6M17.4 12h2.4M6.3 6.3l1.7 1.7M16 16l1.7 1.7M17.7 6.3 16 8M8 16l-1.7 1.7"/></svg> إعدادات التطبيق والتقارير</h2>
           <p style="font-size: 13px; color: #94a3b8; margin-bottom: 16px; text-align: center;" id="set-desc">يمكنك طباعة جميع معلومات التطبيق في ملف PDF منظم أو مسح البيانات.</p>
@@ -684,6 +697,8 @@
           <button class="btn-pdf" style="background:#334155; border:1px solid #38bdf8; color:#38bdf8;" onclick="fixOldUpdatedByNames()"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 3v5h5"/></svg> إصلاح أسماء "آخر تعديل" القديمة</button>
           <button class="btn-pdf" style="background:#334155; border:1px solid #4ade80; color:#4ade80;" onclick="migrateOldPersonalDataToCompany()"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg> نقل البيانات القديمة (من قبل نظام الشركات) لهاد الشركة</button>
           <button class="btn-danger-all" onclick="confirmAndDeleteEverything()" id="btn-del-all-txt"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3 2 20h20z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="17" r="0.7" fill="currentColor" stroke="none"/></svg> مسح جميع بيانات الحساب نهائياً</button>
+          <button class="btn-danger-all" style="background:#334155; border:1px solid #f59e0b; color:#f59e0b;" onclick="leaveCurrentCompany()" id="btn-leave-company-txt"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> مغادرة الشركة الحالية</button>
+          <button class="btn-danger-all" style="background:#7f1d1d; border:1px solid #ef4444;" onclick="deleteMyAccountPermanently()" id="btn-del-account-txt"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7"/><line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/></svg> حذف هذا الحساب نهائياً</button>
         </div>
         <div class="card">
           <h2 id="set-notif-mode-t"><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 3h6M4.5 6l1.5-1.5M19.5 6 18 4.5"/></svg> نمط التنبيهات</h2>

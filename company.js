@@ -15,6 +15,39 @@
       const codeInput = document.getElementById('cs-join-code');
       if (nameInput) nameInput.value = '';
       if (codeInput) codeInput.value = '';
+      selectedCompanyLogo = '';
+      const logoPreview = document.getElementById('cs-logo-preview');
+      if (logoPreview) logoPreview.innerHTML = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#64748b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="12" cy="14" r="3.3"/></svg>`;
+      const logoInput = document.getElementById('cs-logo-input');
+      if (logoInput) logoInput.value = '';
+    }
+
+    // ---------------- شعار الشركة (اختياري) — نفس منطق تصغير/تربيع صورة البروفايل ----------------
+    let selectedCompanyLogo = '';
+
+    function handleCompanyLogoUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          const canvas = document.createElement('canvas');
+          const size = 200;
+          canvas.width = size; canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          const minSide = Math.min(img.width, img.height);
+          const sx = (img.width - minSide) / 2;
+          const sy = (img.height - minSide) / 2;
+          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          selectedCompanyLogo = dataUrl;
+          const preview = document.getElementById('cs-logo-preview');
+          if (preview) preview.innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; object-fit:cover;">`;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
 
     function closeCompanySetupScreenAfterSuccess() {
@@ -52,6 +85,7 @@
       // اللي بانت غير موثوقة فحالة الكتابة المزدوجة فنفس الـbatch)
       batch.set(infoDocRef.collection('info').doc('data'), {
         name,
+        logo: selectedCompanyLogo || '',
         adminUid: currentUid,
         createdBy: currentUid,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -262,6 +296,7 @@
         companyAccessCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderCompanyEmployeesList();
         updateEmployeesBadge();
+        if (typeof renderCompanyBrandUI === 'function') renderCompanyBrandUI(); // باش زر التعديل يبان/يخبى حسب الدور ملي يتعرف
         // ⚠️ الصلاحيات (companyAccessCache) يمكن توصل من بعد ما كانت اللوائح ديال الشيكات/الستوك/
         // التركيبات/الملاحظات دارت الرندر ديالها الأول (Firestore ماكيضمنش ترتيب وصول الـsnapshots).
         // بلا هاد الأسطر، أيقونات تعديل/مسح كانت كتبقى مخبية حتى يوقع رندر آخر عشوائي (بحال زيادة عنصر جديد).
@@ -482,4 +517,148 @@
           </div>` : `<div class="emp-admin-note">${currentLang === 'ar' ? 'المسؤول لديه كامل الصلاحيات تلقائياً.' : "L'administrateur a tous les droits automatiquement."}</div>`}
         </div>`;
       }).join('');
+    }
+
+    // ==================== 🏷️ معلومات الشركة (اسم + شعار) — عرض/تعديل ====================
+    let companyInfoCache = null; // { name, logo }
+    let companyInfoUnsubscribe = null;
+
+    function startCompanyInfoListener(companyId) {
+      if (companyInfoUnsubscribe) { companyInfoUnsubscribe(); companyInfoUnsubscribe = null; }
+      companyInfoCache = null;
+      if (!companyId) { renderCompanyBrandUI(); return; }
+      companyInfoUnsubscribe = db.collection('companies').doc(companyId).collection('info').doc('data')
+        .onSnapshot(doc => {
+          companyInfoCache = doc.exists ? doc.data() : null;
+          renderCompanyBrandUI();
+        }, err => console.error('startCompanyInfoListener error:', err));
+    }
+
+    function renderCompanyBrandUI() {
+      const card = document.getElementById('company-brand-card');
+      const logoBox = document.getElementById('company-brand-logo');
+      const nameBox = document.getElementById('company-brand-name');
+      const editBtn = document.getElementById('btn-edit-company-brand');
+      if (!card || !logoBox || !nameBox) return;
+      if (!companyInfoCache || !companyInfoCache.name) { card.style.display = 'none'; return; }
+      card.style.display = 'block';
+      logoBox.innerHTML = companyInfoCache.logo
+        ? `<img src="${companyInfoCache.logo}" style="width:100%; height:100%; object-fit:cover;">`
+        : `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#64748b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="12" cy="14" r="3.3"/></svg>`;
+      nameBox.textContent = companyInfoCache.name;
+      if (editBtn) editBtn.style.display = isCurrentUserAdmin() ? 'inline-flex' : 'none';
+    }
+
+    // تعديل اسم/شعار الشركة — admin غير. صورة جديدة اختيارية (إلا ماختارش، الاسم غير يتبدل)
+    function openEditCompanyBrand() {
+      if (!isCurrentUserAdmin() || !currentCompanyId) return;
+      const newName = prompt(currentLang === 'ar' ? 'الاسم الجديد للشركة:' : 'Nouveau nom de la société :', (companyInfoCache && companyInfoCache.name) || '');
+      if (newName === null) return;
+      const trimmed = newName.trim();
+      if (!trimmed) return;
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = 'image/*';
+      input.onchange = (event) => {
+        const file = event.target.files[0];
+        const save = (logoDataUrl) => {
+          const payload = { name: trimmed };
+          if (logoDataUrl !== undefined) payload.logo = logoDataUrl;
+          db.collection('companies').doc(currentCompanyId).collection('info').doc('data')
+            .set(payload, { merge: true }).catch(err => {
+              console.error('openEditCompanyBrand error:', err);
+              alert(currentLang === 'ar' ? 'وقع خطأ فالتعديل، حاول من جديد.' : "Une erreur s'est produite, réessayez.");
+            });
+        };
+        if (!file) { save(undefined); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const size = 200;
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const minSide = Math.min(img.width, img.height);
+            const sx = (img.width - minSide) / 2;
+            const sy = (img.height - minSide) / 2;
+            ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+            save(canvas.toDataURL('image/jpeg', 0.85));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      };
+      if (confirm(currentLang === 'ar' ? 'هل تريد أيضاً تغيير شعار الشركة؟ (إلغاء = تبديل الاسم فقط)' : 'Voulez-vous aussi changer le logo ? (Annuler = changer juste le nom)')) {
+        input.click();
+      } else {
+        db.collection('companies').doc(currentCompanyId).collection('info').doc('data')
+          .set({ name: trimmed }, { merge: true }).catch(err => {
+            console.error('openEditCompanyBrand error:', err);
+            alert(currentLang === 'ar' ? 'وقع خطأ فالتعديل، حاول من جديد.' : "Une erreur s'est produite, réessayez.");
+          });
+      }
+    }
+
+    // ==================== 🚪 مغادرة الشركة الحالية (admin ولا عامل) ====================
+    // - عامل عادي: كيمسح وثيقة access ديالو غير، ويرجع لشاشة إنشاء/انضمام شركة.
+    // - admin ومعه admin آخر أو أعضاء آخرين: خاصو يولي "عامل" الأول (ما نقدروش نخليو
+    //   شركة بلا admin) — كنطلبو منه يرقي شخص آخر لـadmin قبل ما يقدر يخرج.
+    // - admin وحيد فالشركة (بلا أي عضو آخر): الخروج هنا كيعني حذف الشركة بكاملها
+    //   (بياناتها: شيكات/مخزون/تركيب/ملاحظات) — بحال بالضبط منطق حذف الحساب.
+    function leaveCurrentCompany() {
+      if (!currentCompanyId || !currentUid) return;
+      const iAmAdmin = isCurrentUserAdmin();
+      const others = companyAccessCache.filter(m => m.id !== currentUid);
+      const otherAdmins = others.filter(m => m.role === 'admin');
+
+      if (iAmAdmin && others.length > 0 && otherAdmins.length === 0) {
+        alert(currentLang === 'ar'
+          ? 'أنت المسؤول الوحيد وباقي معك عمال آخرين، خاصك ترقي عامل آخر لمسؤول قبل ما تقدر تخرج.'
+          : "Vous êtes le seul administrateur et il reste d'autres employés, promouvez-en un avant de pouvoir quitter.");
+        return;
+      }
+
+      const soleMember = others.length === 0;
+      const warn = soleMember
+        ? (currentLang === 'ar'
+          ? '⚠️ أنت الوحيد فهاد الشركة. مغادرتها غادي تمسح نهائياً كل بياناتها (شيكات، مخزون، تركيب، ملاحظات)! متأكد؟'
+          : "⚠️ Vous êtes seul dans cette société. La quitter supprimera DÉFINITIVEMENT toutes ses données (chèques, stock, installations, notes) ! Confirmer ?")
+        : (currentLang === 'ar'
+          ? 'هل تريد مغادرة هذه الشركة؟ غادي تفقد الوصول لبياناتها، ولن تقدر ترجع إلا بكود دعوة جديد.'
+          : "Voulez-vous quitter cette société ? Vous perdrez l'accès à ses données et ne pourrez revenir qu'avec un nouveau code d'invitation.");
+      if (!confirm(warn)) return;
+
+      const companyId = currentCompanyId;
+      const uid = currentUid;
+
+      const cleanup = soleMember
+        ? (() => {
+            const deleteWholeCollection = (col) => db.collection('companies').doc(companyId).collection(col).get()
+              .then(s => Promise.all(s.docs.map(d => d.ref.delete())));
+            const deleteInviteCodes = () => db.collection('inviteCodes').where('companyId', '==', companyId).get()
+              .then(s => Promise.all(s.docs.map(d => d.ref.delete())));
+            return Promise.all([
+              deleteWholeCollection('cheques'),
+              deleteWholeCollection('stock'),
+              deleteWholeCollection('installations'),
+              deleteWholeCollection('notes'),
+              deleteInviteCodes(),
+              db.collection('companies').doc(companyId).collection('access').doc(uid).delete()
+            ]).then(() => db.collection('companies').doc(companyId).collection('info').doc('data').delete().catch(() => {}));
+          })()
+        : db.collection('companies').doc(companyId).collection('access').doc(uid).delete();
+
+      cleanup
+        .then(() => db.collection('users').doc(uid).collection('profile').doc('info').set({ companyId: firebase.firestore.FieldValue.delete() }, { merge: true }))
+        .then(() => {
+          alert(currentLang === 'ar' ? 'تمت مغادرة الشركة.' : 'Vous avez quitté la société.');
+          // ⚠️ بزاف ديال listeners (groups/private chats/members/access...) مربوطين بـcurrentCompanyId
+          // القديم، أبسط وأضمن طريقة نرجعو بيها لحالة "بلا شركة" هي reload كامل للصفحة
+          // (auth.onAuthStateChanged غادي يعاود يقرا companyId الجديد = null ويبين شاشة الإعداد)
+          location.reload();
+        })
+        .catch(err => {
+          console.error('leaveCurrentCompany error:', err);
+          alert(currentLang === 'ar' ? 'وقع خطأ فمغادرة الشركة، حاول من جديد.' : "Une erreur s'est produite, réessayez.");
+        });
     }

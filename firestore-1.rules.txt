@@ -90,8 +90,12 @@ service cloud.firestore {
           get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.joinCode)).data.companyId == companyId &&
           get(/databases/$(database)/documents/inviteCodes/$(request.resource.data.joinCode)).data.used == false;
 
-        // تبديل الدور / الحظر / الحذف: admin غير
-        allow update, delete: if isAdminOf(companyId);
+        // تبديل الدور / الحظر: admin غير. الحذف: admin يقدر يحذف أي عضو،
+        // أو المستخدم نفسو يقدر يمسح وثيقة access ديالو الخاصة (خروج من الشركة
+        // أو حذف الحساب نهائياً — شرط ضروري باش تخدم wipeAccountDataThenDeleteAuth
+        // مع عضو ماشي admin)
+        allow update: if isAdminOf(companyId);
+        allow delete: if isAdminOf(companyId) || (isSignedIn() && request.auth.uid == uid);
       }
 
       // بيانات الشركة المشتركة

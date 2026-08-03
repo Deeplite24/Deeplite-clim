@@ -15,6 +15,7 @@
       dataLoading = { cheques: true, stock: true, installations: true, notes: true };
       renderNavShortcuts();
       if (typeof startAccessListener === 'function') startAccessListener(companyId); // قائمة عمال الشركة + الصلاحيات ديالهم
+      if (typeof startCompanyInfoListener === 'function') startCompanyInfoListener(companyId); // اسم/شعار الشركة
       // ⚠️ هاد الثلاثة كانو غير كيتنادو ملي كتخلق/تنضم لشركة (submitCreateCompany/submitJoinCompany)،
       // ماشي فكل تسجيل دخول عادي — وهادشي كان السبب لي الدردشة الخاصة/الرسائل عمرها ماكانت
       // كتخدم أو كتبان فالإشعارات غير أول جلسة (بعد refresh/دخول جديد، كانت تبقى فارغة).

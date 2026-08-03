@@ -48,6 +48,8 @@
         if (externalGroupsUnsub) { externalGroupsUnsub(); externalGroupsUnsub = null; }
         if (groupMsgsUnsub) { groupMsgsUnsub(); groupMsgsUnsub = null; }
         ownedGroupsCache = []; externalGroupsCache = []; groupMsgsCache = []; currentGroupId = null;
+        if (typeof companyInfoUnsubscribe !== 'undefined' && companyInfoUnsubscribe) { companyInfoUnsubscribe(); companyInfoUnsubscribe = null; }
+        if (typeof companyInfoCache !== 'undefined') companyInfoCache = null;
         if (membersUnsubscribe) { membersUnsubscribe(); membersUnsubscribe = null; }
         teamMembersCache = [];
         if (privateChatsUnsubscribe) { privateChatsUnsubscribe(); privateChatsUnsubscribe = null; }
