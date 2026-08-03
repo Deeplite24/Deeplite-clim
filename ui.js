@@ -126,11 +126,12 @@
         const isActive = acc.email === currentEmail;
         chip.className = 'account-chip' + (isActive ? ' active' : '');
         const shortName = acc.email.split('@')[0];
+        const delIconHtml = `<span class="account-chip-remove" title="${currentLang === 'ar' ? 'حذف نهائياً' : 'Supprimer définitivement'}" onclick="event.stopPropagation(); deleteSavedAccountPermanently('${acc.email}')"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9 7V4.5h6V7M7 7l1 12.5h8L17 7"/></svg></span>`;
 
         if (isActive) {
-          chip.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7"/></svg> ${shortName}`;
+          chip.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7"/></svg> ${shortName} ${delIconHtml}`;
         } else {
-          chip.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7"/></svg> ${shortName} <span class="account-chip-remove" onclick="event.stopPropagation(); removeSavedAccount('${acc.email}')">✕</span>`;
+          chip.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px;margin-inline-end:3px" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.2c1-3.6 4-5.7 7.5-5.7s6.5 2.1 7.5 5.7"/></svg> ${shortName} <span class="account-chip-remove" onclick="event.stopPropagation(); removeSavedAccount('${acc.email}')">✕</span>${delIconHtml}`;
           chip.onclick = () => switchToAccount(acc.email);
         }
         bar.appendChild(chip);

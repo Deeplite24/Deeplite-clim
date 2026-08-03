@@ -303,22 +303,46 @@
     }
 
     // ==================== 🗑️ حذف الحساب نهائياً (Firebase Auth + بياناته) ====================
-    // ⚠️ هاد الميزة كتمسح الحساب لي المستخدم داخل بيه دابا (currentUser) — ماشي أي حساب آخر،
-    // حيت Firebase (لأسباب أمنية) ما كيسمحش تمسح ولا تعاود المصادقة على حساب آخر غير الحساب
-    // الحالي. باش تمسح حساب آخر، خاصك تبدل ليه (switchToAccount) بلا تمسحو.
+    // ⚠️ Firebase (لأسباب أمنية) ما كيسمحش تمسح ولا تعاود المصادقة إلا على الحساب الحالي
+    // (auth.currentUser). باش تمسح حساب آخر محفوظ فسويتش الحسابات، خاصنا نبدلو ليه أولا
+    // (بكلمة السر المحفوظة محليا، بلا حاجة نطلبوها من جديد)، نمسحوه، وبعدين نرجعو
+    // للحساب اللي كنا فيه قبل — هادشي كامل مغلف فـ deleteAccountPermanently(email) اللي
+    // كتخدم مع أي حساب: الحالي أو حساب آخر محفوظ فالسويتش.
     function deleteMyAccountPermanently() {
-      const user = auth.currentUser;
-      if (!user) return;
+      if (!auth.currentUser) return;
+      deleteAccountPermanently(auth.currentUser.email);
+    }
+
+    function deleteSavedAccountPermanently(email) {
+      deleteAccountPermanently(email);
+    }
+
+    async function deleteAccountPermanently(email) {
+      const list = getSavedAccounts();
+      const saved = list.find(a => a.email === email);
+      const currentEmail = auth.currentUser ? auth.currentUser.email : null;
+      const isCurrent = currentEmail === email;
+
+      // إلا الحساب ماشي هو الحالي وماعندناش كلمة السر ديالو محفوظة، ما نقدروش نبدلو ليه
+      if (!isCurrent && !saved) {
+        alert(currentLang === 'ar'
+          ? 'ما يمكنش نمسحو هاد الحساب من هنا، خاصك تبدل ليه أولا (تدوس عليه فسويتش الحسابات).'
+          : "Impossible de supprimer ce compte depuis ici, basculez d'abord vers ce compte.");
+        return;
+      }
 
       const warn1 = currentLang === 'ar'
-        ? `⚠️ تحذير خطير: هاد الإجراء غادي يمسح نهائياً هاد الحساب (${user.email}) من Firebase، بلا رجعة! إلا كنت المسؤول الوحيد فشركة، غادي تتمسح معه كل بياناتها (شيكات، مخزون، ملاحظات، تركيب، دردشة الجماعات). إلا كنتي عضو مع آخرين، غير راه يخرجك منها وبياناتها تبقى لهم. متأكد؟`
-        : `⚠️ Attention : ce compte (${user.email}) va être supprimé DÉFINITIVEMENT de Firebase, sans retour possible ! Si vous êtes le seul administrateur d'une société, toutes ses données (chèques, stock, notes, installations, chat de groupe) seront supprimées aussi. Si vous êtes membre avec d'autres personnes, vous quitterez seulement la société (leurs données restent intactes). Confirmer ?`;
+        ? `⚠️ تحذير خطير: هاد الإجراء غادي يمسح نهائياً هاد الحساب (${email}) من Firebase، بلا رجعة! إلا كان المسؤول الوحيد فشركة، غادي تتمسح معه كل بياناتها (شيكات، مخزون، ملاحظات، تركيب، دردشة الجماعات). إلا كان عضو مع آخرين، غير راه يخرج منها وبياناتها تبقى لهم. متأكد؟`
+        : `⚠️ Attention : ce compte (${email}) va être supprimé DÉFINITIVEMENT de Firebase, sans retour possible ! S'il est le seul administrateur d'une société, toutes ses données (chèques, stock, notes, installations, chat de groupe) seront supprimées aussi. S'il est membre avec d'autres personnes, il quittera seulement la société (leurs données restent intactes). Confirmer ?`;
       if (!confirm(warn1)) return;
 
-      const password = prompt(currentLang === 'ar'
-        ? 'لتأكيد هويتك، اكتب كلمة السر ديال هاد الحساب:'
-        : 'Pour confirmer votre identité, saisissez le mot de passe de ce compte :');
-      if (!password) return;
+      let password = saved ? saved.password : null;
+      if (!password) {
+        password = prompt(currentLang === 'ar'
+          ? 'لتأكيد هويتك، اكتب كلمة السر ديال هاد الحساب:'
+          : 'Pour confirmer votre identité, saisissez le mot de passe de ce compte :');
+        if (!password) return;
+      }
 
       const confirmWord = prompt(currentLang === 'ar'
         ? 'وللتأكيد النهائي، اكتب كلمة (حذف) أو (supprimer):'
@@ -328,24 +352,47 @@
         return;
       }
 
-      const cred = firebase.auth.EmailAuthProvider.credential(user.email, password);
-      user.reauthenticateWithCredential(cred).then(() => {
-        return wipeAccountDataThenDeleteAuth(user);
-      }).catch(err => {
-        console.error('deleteMyAccountPermanently reauth error:', err && err.code, err && err.message);
+      const previousEmail = currentEmail;
+      const previousAcc = (!isCurrent && previousEmail) ? list.find(a => a.email === previousEmail) : null;
+      const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+      try {
+        if (!isCurrent) {
+          await auth.signOut();
+          await wait(250);
+          await auth.signInWithEmailAndPassword(email, password);
+        }
+        const user = auth.currentUser;
+        if (!user) throw new Error('no-current-user-after-switch');
+
+        const cred = firebase.auth.EmailAuthProvider.credential(email, password);
+        await user.reauthenticateWithCredential(cred);
+        // كنجيبو companyId محدث خاص بهاد الحساب بالضبط (ماشي نعتمدو على currentCompanyId
+        // العام اللي ممكن مازال ماتبدلش فحالة تبديل حساب سريع)
+        const companyId = await loadUserCompanyContext(user.uid);
+        await wipeAccountDataThenDeleteAuth(user, companyId);
+
+        if (previousAcc) {
+          await wait(250);
+          try { await auth.signInWithEmailAndPassword(previousAcc.email, previousAcc.password); } catch (e) { /* ok */ }
+        }
+      } catch (err) {
+        console.error('deleteAccountPermanently error:', err && err.code, err && err.message);
         alert(currentLang === 'ar'
-          ? 'كلمة السر غير صحيحة، تعذر تأكيد الهوية. أعد المحاولة.'
-          : "Mot de passe incorrect, impossible de confirmer l'identité. Réessayez.");
-      });
+          ? 'تعذر حذف الحساب (كلمة السر غير صحيحة أو مشكل فالاتصال)، حاول من جديد.'
+          : "Impossible de supprimer ce compte (mot de passe incorrect ou problème de connexion), réessayez.");
+        if (previousAcc) {
+          try { await wait(250); await auth.signInWithEmailAndPassword(previousAcc.email, previousAcc.password); } catch (e2) { /* ok */ }
+        }
+      }
     }
 
     // كتمسح البيانات المرتبطة بالحساب (وثيقة profile، ومجموعات groups/{id} اللي هو
     // فيها — top-level، ماشي تحت companies، وكود دعوة الشركة inviteCodes — top-level
     // بحالو، وإما بيانات الشركة كاملة إلا كان آخر عضو فيها وإلا غير وثيقة access ديالو
     // إلا كان معه أعضاء آخرين)، ثم كتمسح الحساب ديال Firebase Auth نفسه فالأخير.
-    function wipeAccountDataThenDeleteAuth(user) {
+    function wipeAccountDataThenDeleteAuth(user, companyId) {
       const uid = user.uid;
-      const companyId = currentCompanyId;
 
       // groups/{id} كولكسيون top-level (ماشي تحت الشركة) وكل مجموعة فيها memberIds خاصة بيها،
       // ممكن يكونو فيها أعضاء من شركات أخرى دخلو بكود دعوة — فهاد الحالة ما نديروش delete
