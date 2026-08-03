@@ -100,6 +100,41 @@ setInterval(() => {
   try { refreshMsgsBadge(); } catch (e) { console.error('[notify-msgs] self-check failed:', e); }
 }, 3000);
 
+// ⚠️ "الملاذ الأخير": قراءة مباشرة من Firestore (query جديد، بلا أي cache/listener) كل
+// 5 ثواني — حتى ولو كاين شي مشكل فالـlisteners (مقطوعين، معلقين، خطأ صامت...)، هاد الفحص
+// كيجيب الرقم الصحيح مباشرة من السيرفر ويحدث الشارة بيه، بلا ما يعتمد على أي حاجة أخرى.
+let __directFetchLastError = null;
+function __directFetchMsgsUnread() {
+  if (typeof db === 'undefined' || !db || typeof currentUid === 'undefined' || !currentUid) return;
+  const myId = currentUid;
+  let groupTotal = 0, privateTotal = 0;
+  const groupPromise = db.collection('groups').where('memberIds', 'array-contains', myId).get()
+    .then(snap => { groupTotal = 0; snap.forEach(d => { const g = d.data(); groupTotal += (g.unread && g.unread[myId]) || 0; }); })
+    .catch(e => { __directFetchLastError = 'direct group fetch: ' + e.message; });
+  const privatePromise = (typeof currentCompanyId !== 'undefined' && currentCompanyId)
+    ? db.collection('companies').doc(currentCompanyId).collection('privateChats').where('participants', 'array-contains', myId).get()
+        .then(snap => { privateTotal = 0; snap.forEach(d => { const c = d.data(); privateTotal += (c.unread && c.unread[myId]) || 0; }); })
+        .catch(e => { __directFetchLastError = 'direct private fetch: ' + e.message; })
+    : Promise.resolve();
+  Promise.all([groupPromise, privatePromise]).then(() => {
+    const total = groupTotal + privateTotal;
+    const badge = document.getElementById('msgs-badge');
+    if (badge && total > 0) { badge.innerText = total > 9 ? '9+' : String(total); badge.style.display = 'flex'; }
+    // ⚠️ ملاحظة: هنا كنبينو الشارة إلا كاين unread حقيقي، بصح ماكنخبيوهاش إلا كانت =0 —
+    // حيت القراءة المباشرة بطيئة شوية (كل 5 ثواني) وقد تكون أقل حداثة من refreshMsgsBadge()
+    // اللي كيخدم فالحين عبر الـlisteners؛ هادي غير شبكة أمان تبين الرقم الصحيح إلا كان مخفي غلط.
+    const debugEl = document.getElementById('__direct-fetch-debug');
+    if (debugEl) debugEl.innerText = 'DIRECT-FETCH • grp:' + groupTotal + ' • priv:' + privateTotal + ' • total:' + total + ' • ' + new Date().toLocaleTimeString() + (__directFetchLastError ? ' • ERR:' + __directFetchLastError : '');
+  });
+}
+setInterval(__directFetchMsgsUnread, 5000);
+setTimeout(__directFetchMsgsUnread, 1500);
+
 document.addEventListener('DOMContentLoaded', () => {
   try { refreshMsgsBadge(); } catch (e) {}
+  const el = document.createElement('div');
+  el.id = '__direct-fetch-debug';
+  el.style.cssText = 'position:fixed;top:44px;left:0;right:0;z-index:999999;background:#16a34a;color:#fff;font-size:11px;padding:4px 8px;direction:ltr;text-align:left;';
+  el.innerText = 'DIRECT-FETCH • waiting...';
+  document.body.appendChild(el);
 });
