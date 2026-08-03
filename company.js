@@ -329,6 +329,20 @@
       db.collection('companies').doc(currentCompanyId).collection('access').doc(uid).set({ blocked: newVal }, { merge: true }).catch(err => console.error('toggleAccessBlock error:', err));
     }
 
+    // المسؤول غير هو لي يقدر يبدل سمية عامل. السمية اللي كيختارها المسؤول كتبقى هي لي كتبان
+    // (nameSetByAdmin) حتى لو العامل بدل السمية ديالو فالبروفايل الشخصي ديالو من بعد.
+    function renameEmployee(uid) {
+      if (!isCurrentUserAdmin() || !currentCompanyId) return;
+      const m = companyAccessCache.find(x => x.id === uid);
+      if (!m) return;
+      const newName = prompt(currentLang === 'ar' ? 'السمية الجديدة لهاد العامل:' : 'Nouveau nom pour cet employé :', m.name || '');
+      if (newName === null) return;
+      const trimmed = newName.trim();
+      if (!trimmed) return;
+      db.collection('companies').doc(currentCompanyId).collection('access').doc(uid)
+        .set({ name: trimmed, nameSetByAdmin: true }, { merge: true }).catch(err => console.error('renameEmployee error:', err));
+    }
+
     function toggleAccessRole(uid) {
       if (!isCurrentUserAdmin() || !currentCompanyId) return;
       const m = companyAccessCache.find(x => x.id === uid);
@@ -411,6 +425,7 @@
         const roleBadge = `<span class="emp-name-badge ${mIsAdmin ? 'emp-name-badge-blue' : 'emp-name-badge-gray'}">${mIsAdmin ? (currentLang === 'ar' ? 'مسؤول' : 'Administrateur') : (currentLang === 'ar' ? 'عامل عادي' : 'Employé')}</span>`;
         const blockedBadge = blocked ? `<span class="emp-name-badge emp-name-badge-red">${currentLang === 'ar' ? 'محظور' : 'Bloqué'}</span>` : '';
         const chatBtn = `<button class="emp-icon-btn emp-icon-btn-blue" title="${currentLang === 'ar' ? 'دردشة خاصة' : 'Chat privé'}" onclick="openPrivateChat('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 6l9 7 9-7"/></svg></button>`;
+        const renameBtn = iAmAdmin ? `<button class="emp-icon-btn emp-icon-btn-gray" title="${currentLang === 'ar' ? 'تعديل السمية' : 'Renommer'}" onclick="renameEmployee('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 20l1-4.2L15.8 5 19 8.2 8.2 19z"/><line x1="13.8" y1="6.9" x2="17" y2="10.1"/></svg></button>` : '';
         const roleBtn = iAmAdmin ? `<button class="emp-icon-btn emp-icon-btn-gray" title="${mIsAdmin ? (currentLang === 'ar' ? 'تنزيل لعامل عادي' : 'Rétrograder') : (currentLang === 'ar' ? 'ترقية لمسؤول' : 'Promouvoir admin')}" onclick="toggleAccessRole('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="3.4"/><path d="M6 20c.8-3.2 3.2-5 6-5s5.2 1.8 6 5"/></svg></button>` : '';
         const blockBtn = iAmAdmin ? `<button class="emp-icon-btn ${blocked ? 'emp-icon-btn-green' : 'emp-icon-btn-red'}" title="${blocked ? (currentLang === 'ar' ? 'فك الحظر' : 'Débloquer') : (currentLang === 'ar' ? 'حظر' : 'Bloquer')}" onclick="toggleAccessBlock('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/>${blocked ? '' : '<line x1="5.5" y1="18.5" x2="18.5" y2="5.5"/>'}</svg></button>` : '';
         const removeBtn = iAmAdmin ? `<button class="emp-icon-btn emp-icon-btn-red" title="${currentLang === 'ar' ? 'إزالة نهائياً' : 'Retirer'}" onclick="removeEmployeeFromCompany('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 7h14M9 7V4.5h6V7M7 7l1 12.5h8L17 7"/></svg></button>` : '';
@@ -421,7 +436,7 @@
               <div class="members-list-name">${m.name || (currentLang === 'ar' ? 'عامل' : 'Employé')}</div>
               ${roleBadge} ${blockedBadge}
             </div>
-            <div class="emp-icon-actions" style="display:flex; gap:6px;">${chatBtn}${roleBtn}${blockBtn}${removeBtn}</div>
+            <div class="emp-icon-actions" style="display:flex; gap:6px;">${chatBtn}${renameBtn}${roleBtn}${blockBtn}${removeBtn}</div>
           </div>
           ${!mIsAdmin ? `<div class="emp-perms-row" style="margin:8px 0; display:flex; flex-direction:column;">
             ${permRow('cheques', currentLang === 'ar' ? '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-inline-end:2px" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg> الشيكات' : 'Chèques')}

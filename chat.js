@@ -9,10 +9,15 @@
       if (!currentUid || !currentCompanyId) return;
       const p = getDeviceProfile();
       if (!p || (!p.firstName && !p.lastName)) return;
-      db.collection('companies').doc(currentCompanyId).collection('access').doc(currentUid).set({
-        name: deviceDisplayName(p), avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto, phone: p.phone || '',
-        lastActive: new Date().toISOString()
-      }, { merge: true }).catch(() => {});
+      const ref = db.collection('companies').doc(currentCompanyId).collection('access').doc(currentUid);
+      ref.get().then(doc => {
+        const data = doc.exists ? doc.data() : {};
+        const updates = { avatar: p.avatar || '', avatarIsPhoto: !!p.avatarIsPhoto, phone: p.phone || '', lastActive: new Date().toISOString() };
+        // إذا المسؤول بدل سمية هاد العامل يدويا (nameSetByAdmin)، نخليو السمية كيفما دارها المسؤول
+        // وما نبدلوهاش بالسمية اللي كيختارها العامل لراسو فالبروفايل ديالو
+        if (!data.nameSetByAdmin) updates.name = deviceDisplayName(p);
+        ref.set(updates, { merge: true }).catch(() => {});
+      }).catch(() => {});
     }
 
     function startMembersListener(companyId) {
@@ -498,9 +503,7 @@
       ['cheques', 'stock', 'installations', 'notes'].forEach(col => {
         (globalData[col] || []).forEach(d => {
           if (d.pendingEdit && d.pendingEdit.proposedBy !== myId) {
-            const proposer = teamMembersCache.find(x => x.id === d.pendingEdit.proposedBy);
-            const liveName = proposer ? deviceDisplayName(proposer) : d.pendingEdit.proposedByName;
-            list.push({ col, id: d.id, name: liveName });
+            list.push({ col, id: d.id, name: liveNameFor(d.pendingEdit.proposedBy, d.pendingEdit.proposedByName) });
           }
         });
       });
@@ -732,7 +735,7 @@
       return pendingEditFallbackOpen(item.pendingEdit);
     }
 
-    function applyEditNow(col, id, data, name) {
+    function applyEditNow(col, id, data, name, uid) {
       const item = (globalData[col] || []).find(x => x.id === id);
       const prevData = {};
       if (item) {
@@ -742,6 +745,7 @@
         previousData: prevData,
         updatedAt: new Date().toISOString(),
         updatedBy: name,
+        updatedByUid: uid || currentUid,
         pendingEdit: firebase.firestore.FieldValue.delete()
       });
       db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update(updates).catch(showSaveError);
@@ -764,7 +768,7 @@
       const item = (globalData[col] || []).find(x => x.id === id);
       const isCreator = !item || !item.createdByDeviceId || item.createdByDeviceId === myId;
       if (isCreator || isCurrentUserAdmin()) {
-        applyEditNow(col, id, data, name);
+        applyEditNow(col, id, data, name, myId);
       } else {
         sendEditForApproval(col, id, data, myId, name);
       }
@@ -781,6 +785,7 @@
         previousData: prevData,
         updatedAt: new Date().toISOString(),
         updatedBy: item.pendingEdit.proposedByName,
+        updatedByUid: item.pendingEdit.proposedBy,
         pendingEdit: firebase.firestore.FieldValue.delete()
       });
       db.collection('companies').doc(currentCompanyId).collection(col).doc(id).update(updates);
@@ -810,7 +815,7 @@
           <button class="btn-reject" onclick="rejectEdit('${col}','${d.id}')">${t.btnReject}</button>
         </div>`;
       }
-      return `<div class="pending-edit-box"><div class="pending-edit-label">⏳ ${t.pendingEditFrom} ${d.pendingEdit.proposedByName} ${dateStr ? '(' + dateStr + ')' : ''}</div>${actionsHtml}</div>`;
+      return `<div class="pending-edit-box"><div class="pending-edit-label">⏳ ${t.pendingEditFrom} ${liveNameFor(d.pendingEdit.proposedBy, d.pendingEdit.proposedByName)} ${dateStr ? '(' + dateStr + ')' : ''}</div>${actionsHtml}</div>`;
     }
 
 
@@ -864,6 +869,16 @@
       return (neg ? '-' : '') + withCommas;
     }
 
+    // كتبحث عن السمية الحالية (المحدثة) ديال صاحب uid معين فدليل الشركة (companyAccessCache)،
+    // وكترجع السمية القديمة المخزنة (fallback) إلا ماكانش uid، أو الشخص غادي من الشركة
+    function liveNameFor(uid, fallbackName) {
+      if (uid && typeof companyAccessCache !== 'undefined' && Array.isArray(companyAccessCache)) {
+        const m = companyAccessCache.find(x => x.id === uid);
+        if (m && m.name) return m.name;
+      }
+      return fallbackName || '-';
+    }
+
     function formatUpdateInfo(d) {
       if (!d.updatedAt) return '';
       let dateStr = '';
@@ -871,7 +886,7 @@
         dateStr = formatDateTimeShort(new Date(d.updatedAt));
       } catch (e) {}
       const label = currentLang === 'ar' ? 'آخر تعديل' : 'Dernière modif.';
-      return `<div class="item-sub" style="color:#38bdf8;">🕓 ${label}: ${d.updatedBy || '-'}${dateStr ? ' | ' + dateStr : ''}</div>`;
+      return `<div class="item-sub" style="color:#38bdf8;">🕓 ${label}: ${liveNameFor(d.updatedByUid, d.updatedBy)}${dateStr ? ' | ' + dateStr : ''}</div>`;
     }
 
     // كيبين شكون هو صاحب العنصر الأصلي (الجهاز لي زاد العنصر أول مرة) — هو هو لي عندو الحق
@@ -879,7 +894,7 @@
     function formatCreatedInfo(d) {
       if (!d.createdByName) return '';
       const label = currentLang === 'ar' ? 'أضيف من طرف' : 'Ajouté par';
-      return `<div class="item-sub" style="color:#94a3b8;">👤 ${label}: ${d.createdByName}</div>`;
+      return `<div class="item-sub" style="color:#94a3b8;">👤 ${label}: ${liveNameFor(d.createdByUid, d.createdByName)}</div>`;
     }
 
     const previousValueFieldLabels = {
