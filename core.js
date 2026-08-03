@@ -302,6 +302,113 @@
       publishMyEmail();
     }
 
+    // ==================== 🗑️ حذف الحساب نهائياً (Firebase Auth + بياناته) ====================
+    // ⚠️ هاد الميزة كتمسح الحساب لي المستخدم داخل بيه دابا (currentUser) — ماشي أي حساب آخر،
+    // حيت Firebase (لأسباب أمنية) ما كيسمحش تمسح ولا تعاود المصادقة على حساب آخر غير الحساب
+    // الحالي. باش تمسح حساب آخر، خاصك تبدل ليه (switchToAccount) بلا تمسحو.
+    function deleteMyAccountPermanently() {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const warn1 = currentLang === 'ar'
+        ? `⚠️ تحذير خطير: هاد الإجراء غادي يمسح نهائياً هاد الحساب (${user.email}) من Firebase، بلا رجعة! إلا كنت المسؤول الوحيد فشركة، غادي تتمسح معه كل بياناتها (شيكات، مخزون، ملاحظات، تركيب، دردشة الجماعات). إلا كنتي عضو مع آخرين، غير راه يخرجك منها وبياناتها تبقى لهم. متأكد؟`
+        : `⚠️ Attention : ce compte (${user.email}) va être supprimé DÉFINITIVEMENT de Firebase, sans retour possible ! Si vous êtes le seul administrateur d'une société, toutes ses données (chèques, stock, notes, installations, chat de groupe) seront supprimées aussi. Si vous êtes membre avec d'autres personnes, vous quitterez seulement la société (leurs données restent intactes). Confirmer ?`;
+      if (!confirm(warn1)) return;
+
+      const password = prompt(currentLang === 'ar'
+        ? 'لتأكيد هويتك، اكتب كلمة السر ديال هاد الحساب:'
+        : 'Pour confirmer votre identité, saisissez le mot de passe de ce compte :');
+      if (!password) return;
+
+      const confirmWord = prompt(currentLang === 'ar'
+        ? 'وللتأكيد النهائي، اكتب كلمة (حذف) أو (supprimer):'
+        : 'Pour la confirmation finale, tapez (supprimer) ou (حذف) :');
+      if (confirmWord !== 'حذف' && confirmWord !== 'supprimer') {
+        alert(currentLang === 'ar' ? 'تم إلغاء العملية.' : "Opération annulée.");
+        return;
+      }
+
+      const cred = firebase.auth.EmailAuthProvider.credential(user.email, password);
+      user.reauthenticateWithCredential(cred).then(() => {
+        return wipeAccountDataThenDeleteAuth(user);
+      }).catch(err => {
+        console.error('deleteMyAccountPermanently reauth error:', err && err.code, err && err.message);
+        alert(currentLang === 'ar'
+          ? 'كلمة السر غير صحيحة، تعذر تأكيد الهوية. أعد المحاولة.'
+          : "Mot de passe incorrect, impossible de confirmer l'identité. Réessayez.");
+      });
+    }
+
+    // كتمسح البيانات المرتبطة بالحساب (وثيقة profile، ومجموعات groups/{id} اللي هو
+    // فيها — top-level، ماشي تحت companies، وكود دعوة الشركة inviteCodes — top-level
+    // بحالو، وإما بيانات الشركة كاملة إلا كان آخر عضو فيها وإلا غير وثيقة access ديالو
+    // إلا كان معه أعضاء آخرين)، ثم كتمسح الحساب ديال Firebase Auth نفسه فالأخير.
+    function wipeAccountDataThenDeleteAuth(user) {
+      const uid = user.uid;
+      const companyId = currentCompanyId;
+
+      // groups/{id} كولكسيون top-level (ماشي تحت الشركة) وكل مجموعة فيها memberIds خاصة بيها،
+      // ممكن يكونو فيها أعضاء من شركات أخرى دخلو بكود دعوة — فهاد الحالة ما نديروش delete
+      // شامل، غير نمسحو المجموعة إلا كنا آخر عضو فيها وكنا مالكها (ownerUid)، وإلا غير
+      // نخرجو منها (نحيدو uid من memberIds/allAuthorizedUids) بلا ما نمسو حتى حاجة أخرى.
+      // ⚠️ ملاحظة: ما نقدروش نمسحو الرسائل ديال المجموعة (ماكاينش allow delete عليها فالقواعد
+      // الحالية)، فإلا تمسحت المجموعة، الرسائل ديالها كتبقى وثائق يتيمة غير قابلة للقراءة أبداً
+      // (limitation معروفة ديال Firestore، بلا خطر حقيقي حيت ما تقدرش تتقرا من طرف حتى حد).
+      const cleanupMyGroups = () => db.collection('groups').where('memberIds', 'array-contains', uid).get()
+        .then(snap => Promise.all(snap.docs.map(g => {
+          const data = g.data() || {};
+          const remaining = (data.memberIds || []).filter(id => id !== uid);
+          if (data.ownerUid === uid && remaining.length === 0) {
+            return g.ref.delete().catch(() => {});
+          }
+          const newAuthorized = (data.allAuthorizedUids || []).filter(id => id !== uid);
+          return g.ref.update({ memberIds: remaining, allAuthorizedUids: newAuthorized }).catch(() => {});
+        })));
+
+      const cleanupCompanyData = () => {
+        if (!companyId) return Promise.resolve();
+        return db.collection('companies').doc(companyId).collection('access').get().then(snap => {
+          const others = snap.docs.filter(d => d.id !== uid);
+          if (others.length > 0) {
+            // ماشي وحيد فالشركة: غير نخرج منها (نمسح وثيقة access ديالنا)، بياناتها تبقى للباقي
+            return db.collection('companies').doc(companyId).collection('access').doc(uid).delete();
+          }
+          // وحيد فالشركة: نمسحو كامل بياناتها معها (شيكات/مخزون/تركيب/ملاحظات) + كود(كودات)
+          // الدعوة ديالها، قبل ما نمسحو وثيقة الشركة نفسها
+          const deleteWholeCollection = (col) => db.collection('companies').doc(companyId).collection(col).get()
+            .then(s => Promise.all(s.docs.map(d => d.ref.delete())));
+          const deleteInviteCodes = () => db.collection('inviteCodes').where('companyId', '==', companyId).get()
+            .then(s => Promise.all(s.docs.map(d => d.ref.delete())));
+          return Promise.all([
+            deleteWholeCollection('cheques'),
+            deleteWholeCollection('stock'),
+            deleteWholeCollection('installations'),
+            deleteWholeCollection('notes'),
+            deleteInviteCodes(),
+            db.collection('companies').doc(companyId).collection('access').doc(uid).delete()
+          ]).then(() => db.collection('companies').doc(companyId).collection('info').doc('data').delete().catch(() => {}));
+        });
+      };
+
+      return cleanupMyGroups()
+        .then(cleanupCompanyData)
+        .then(() => db.collection('users').doc(uid).collection('profile').doc('info').delete().catch(() => {}))
+        .then(() => {
+          if (typeof removeSavedAccount === 'function') removeSavedAccount(user.email);
+          return user.delete();
+        })
+        .then(() => {
+          alert(currentLang === 'ar' ? 'تم حذف الحساب نهائياً.' : 'Compte supprimé définitivement.');
+          // auth.onAuthStateChanged (init.js) غادي يتكلف تلقائياً بإرجاع الماستخدم لشاشة تسجيل الدخول
+        })
+        .catch(err => {
+          console.error('wipeAccountDataThenDeleteAuth error:', err && err.code, err && err.message);
+          alert(currentLang === 'ar'
+            ? 'وقع خطأ فحذف الحساب، حاول من جديد.'
+            : "Une erreur s'est produite lors de la suppression du compte, réessayez.");
+        });
+    }
+
     function deviceDisplayName(p) {
       if (!p) return '?';
       return `${p.firstName || ''} ${p.lastName || ''}`.trim() || '?';
