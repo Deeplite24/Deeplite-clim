@@ -262,6 +262,13 @@
         companyAccessCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderCompanyEmployeesList();
         updateEmployeesBadge();
+        // ⚠️ الصلاحيات (companyAccessCache) يمكن توصل من بعد ما كانت اللوائح ديال الشيكات/الستوك/
+        // التركيبات/الملاحظات دارت الرندر ديالها الأول (Firestore ماكيضمنش ترتيب وصول الـsnapshots).
+        // بلا هاد الأسطر، أيقونات تعديل/مسح كانت كتبقى مخبية حتى يوقع رندر آخر عشوائي (بحال زيادة عنصر جديد).
+        if (typeof renderChequesListUI === 'function') renderChequesListUI();
+        if (typeof renderStockListUI === 'function') renderStockListUI();
+        if (typeof renderInstallationsListUI === 'function') renderInstallationsListUI();
+        if (typeof renderNotesListUI === 'function') renderNotesListUI();
       }, err => console.error('startAccessListener error:', err));
     }
 
