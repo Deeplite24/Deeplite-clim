@@ -145,6 +145,14 @@
         forceProfileSetup = false;
         document.getElementById('profile-setup-modal').classList.remove('show');
         if (typeof renderAccountSwitcher === 'function') renderAccountSwitcher();
+        // ⚠️ باگ مصلّح: هاد الفورم كيحفظ الاسم فبروفايل الحساب (users/{uid}/profile/info) فقط،
+        // بحال ماكان upsertMember() هو لي كيكتب الاسم فوثيقة companies/{companyId}/access/{uid}
+        // (المصدر اللي كتقرا منو لائحة العمال). بلا هاد المزامنة، الاسم الجديد كان كيبان فسويتش
+        // الحسابات فقط، وماكانش كيوصل للعمال الآخرين. دابا كنزامنو نفس الاسم/الأفاتار فبروفايل
+        // الجهاز (اللي upsertMember كيقرا منو) ونديرو upsertMember() هنا.
+        const dp = getDeviceProfile() || {};
+        setDeviceProfile(Object.assign({}, dp, { firstName, lastName, avatar: profileData.avatar || dp.avatar || '', avatarIsPhoto: profileData.avatarIsPhoto }));
+        if (typeof upsertMember === 'function') upsertMember();
         // بعد ما كمل معلومات البروفايل، إلا ماكانش مرتبط بأي شركة، نبينو له شاشة خلق/انضمام شركة
         if (!currentCompanyId && typeof openCompanySetupScreen === 'function') {
           openCompanySetupScreen();
