@@ -1,5 +1,5 @@
 // Service Worker ديال Deep Lite Clim — كيخلي التطبيق يخدم بلا انترنت
-const CACHE_NAME = 'deeplite-clim-cache-v3';
+const CACHE_NAME = 'deeplite-clim-cache-v4';
 
 // الملفات الأساسية اللي خاصها تتخزن مباشرة عند أول تحميل
 const APP_SHELL = [
