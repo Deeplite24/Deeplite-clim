@@ -19,22 +19,9 @@
 
     function privateChatKey(idA, idB) { return [idA, idB].sort().join('__'); }
 
-    function __showSendDebug(status) {
-      let el = document.getElementById('__send-debug');
-      if (!el) {
-        el = document.createElement('div');
-        el.id = '__send-debug';
-        el.style.cssText = 'position:fixed;top:66px;left:0;right:0;z-index:999999;background:#ea580c;color:#fff;font-size:11px;padding:4px 8px;direction:ltr;text-align:left;';
-        document.body.appendChild(el);
-      }
-      el.innerText = 'SEND-DEBUG • ' + status;
-    }
-
-    let __privateListenerCompanyId = null;
     function startPrivateChatsListener(companyId) {
       if (privateChatsUnsubscribe) { privateChatsUnsubscribe(); privateChatsUnsubscribe = null; }
       privateChatsCache = [];
-      __privateListenerCompanyId = companyId;
       if (!companyId) return;
       const myId = currentUid;
       privateChatsUnsubscribe = db.collection('companies').doc(companyId).collection('privateChats')
@@ -45,34 +32,8 @@
           if (currentPrivateChatWith) renderPrivateMessages();
           updateBellNotifications();
           if (typeof updateChatUnreadBadge === 'function') updateChatUnreadBadge();
-          __directPrivateDebugUpdate();
-        }, err => { console.error('[DeepliteClim] privateChats listener died:', err); __directPrivateDebugUpdate('ERROR: ' + err.message); });
+        }, err => console.error('[DeepliteClim] privateChats listener died:', err));
     }
-
-    // ⚠️ اختبار معزول مؤقت، بحال __directGroupDebugUpdate() فـgroups.js بالضبط — كيكتب
-    // مباشرة فشريط أزرق ثابت فوق الصفحة، بلا ما يمر بأي دالة أخرى (لا computeTotalPrivateUnread،
-    // لا updateBellNotifications، لا notify-msgs) — باش نتأكدو واش الـlistener ديال الدردشة
-    // الخاصة كيتوصل بيه فعلا بتحديثات حية، ونشوفو القيمة الخام ديال unread مباشرة من Firestore.
-    let __directPrivateDebugCount = 0;
-    function __directPrivateDebugUpdate(status) {
-      __directPrivateDebugCount++;
-      let el = document.getElementById('__direct-private-debug');
-      if (!el) {
-        el = document.createElement('div');
-        el.id = '__direct-private-debug';
-        el.style.cssText = 'position:fixed;top:22px;left:0;right:0;z-index:999999;background:#2563eb;color:#fff;font-size:11px;padding:4px 8px;direction:ltr;text-align:left;';
-        document.body.appendChild(el);
-      }
-      if (status) { el.innerText = 'PRIVATE-DEBUG • ' + status; return; }
-      const myId = currentUid;
-      let total = 0;
-      privateChatsCache.forEach(c => { total += (c.unread && myId && c.unread[myId]) || 0; });
-      el.innerText = 'PRIVATE-DEBUG • listener fired: ' + __directPrivateDebugCount + 'x • convs: ' + privateChatsCache.length + ' • unread total: ' + total + ' • uid:' + (myId ? myId.slice(0,6) : 'NONE') + ' • listenerCompany:' + (__privateListenerCompanyId ? __privateListenerCompanyId.slice(0,10) : 'NONE') + ' • ' + new Date().toLocaleTimeString();
-    }
-    // كتبان فالحين ملي يتحمل الملف، قبل حتى ما تجاوب Firestore — إلا بقات عالقة عند
-    // هاد الحالة "waiting..." معناه الـlistener عمرو ماتنادى أو عمرو ماجاوب
-    document.addEventListener('DOMContentLoaded', () => __directPrivateDebugUpdate('waiting for listener to start...'));
-    setTimeout(() => __directPrivateDebugUpdate('waiting for listener to start...'), 500);
 
     function computeTotalPrivateUnread() {
       const myId = currentUid;
@@ -240,11 +201,8 @@
         };
         update['unread.' + otherId] = firebase.firestore.FieldValue.increment(1);
         update['unread.' + myId] = 0;
-        parentRef.set(update, { merge: true }).then(() => {
-          __showSendDebug('OK: wrote unread.' + otherId.slice(0,6) + '+1 → company:' + (currentCompanyId||'').slice(0,10) + ' key:' + key);
-        }).catch(err => {
+        parentRef.set(update, { merge: true }).catch(err => {
           console.error('sendPrivateMessage unread update error:', err);
-          __showSendDebug('FAIL: ' + err.message);
           showSaveError(err);
         });
         input.value = '';
