@@ -498,7 +498,9 @@
       ['cheques', 'stock', 'installations', 'notes'].forEach(col => {
         (globalData[col] || []).forEach(d => {
           if (d.pendingEdit && d.pendingEdit.proposedBy !== myId) {
-            list.push({ col, id: d.id, name: d.pendingEdit.proposedByName });
+            const proposer = teamMembersCache.find(x => x.id === d.pendingEdit.proposedBy);
+            const liveName = proposer ? deviceDisplayName(proposer) : d.pendingEdit.proposedByName;
+            list.push({ col, id: d.id, name: liveName });
           }
         });
       });
