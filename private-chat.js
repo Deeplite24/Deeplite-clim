@@ -31,7 +31,28 @@
           renderPrivateChatList();
           updateBellNotifications();
           if (typeof updateChatUnreadBadge === 'function') updateChatUnreadBadge();
+          __directPrivateDebugUpdate();
         }, err => console.error('[DeepliteClim] privateChats listener died:', err));
+    }
+
+    // ⚠️ اختبار معزول مؤقت، بحال __directGroupDebugUpdate() فـgroups.js بالضبط — كيكتب
+    // مباشرة فشريط أزرق ثابت فوق الصفحة، بلا ما يمر بأي دالة أخرى (لا computeTotalPrivateUnread،
+    // لا updateBellNotifications، لا notify-msgs) — باش نتأكدو واش الـlistener ديال الدردشة
+    // الخاصة كيتوصل بيه فعلا بتحديثات حية، ونشوفو القيمة الخام ديال unread مباشرة من Firestore.
+    let __directPrivateDebugCount = 0;
+    function __directPrivateDebugUpdate() {
+      __directPrivateDebugCount++;
+      let el = document.getElementById('__direct-private-debug');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = '__direct-private-debug';
+        el.style.cssText = 'position:fixed;top:22px;left:0;right:0;z-index:999999;background:#2563eb;color:#fff;font-size:11px;padding:4px 8px;direction:ltr;text-align:left;';
+        document.body.appendChild(el);
+      }
+      const myId = currentUid;
+      let total = 0;
+      privateChatsCache.forEach(c => { total += (c.unread && myId && c.unread[myId]) || 0; });
+      el.innerText = 'PRIVATE-DEBUG • listener fired: ' + __directPrivateDebugCount + 'x • convs: ' + privateChatsCache.length + ' • unread total: ' + total + ' • uid:' + (myId ? myId.slice(0,6) : 'NONE') + ' • ' + new Date().toLocaleTimeString();
     }
 
     function computeTotalPrivateUnread() {
