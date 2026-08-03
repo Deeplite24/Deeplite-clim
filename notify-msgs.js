@@ -15,9 +15,13 @@
 
 let __notifyMsgsLastError = null;
 let __notifyMsgsLastRefresh = null;
+let __notifyMsgsLastTotal = null;
+let __notifyMsgsBadgeFound = null;
+let __notifyMsgsBadgeDisplay = null;
 
 function refreshMsgsBadge() {
   const badge = document.getElementById('msgs-badge');
+  __notifyMsgsBadgeFound = !!badge;
   let total = 0;
 
   try { if (typeof computeGroupChatUnread === 'function') total += computeGroupChatUnread(); }
@@ -36,10 +40,14 @@ function refreshMsgsBadge() {
   catch (e) { console.error('[notify-msgs] group joins failed:', e); __notifyMsgsLastError = 'group joins: ' + e.message; }
 
   __notifyMsgsLastRefresh = new Date();
+  __notifyMsgsLastTotal = total;
 
   if (badge) {
     if (total > 0) { badge.innerText = total > 9 ? '9+' : String(total); badge.style.display = 'flex'; }
     else { badge.style.display = 'none'; }
+    __notifyMsgsBadgeDisplay = badge.style.display;
+  } else {
+    __notifyMsgsBadgeDisplay = 'ELEMENT_NOT_FOUND';
   }
 
   const box = document.getElementById('msgs-center-box');
@@ -65,7 +73,9 @@ function renderNotifyMsgsDebugFooter() {
   const time = __notifyMsgsLastRefresh ? __notifyMsgsLastRefresh.toLocaleTimeString() : 'n/a';
   const err = __notifyMsgsLastError ? __notifyMsgsLastError : 'لا خطأ';
   const debugHtml = `<div style="margin-top:10px;padding:8px;border-top:1px dashed #64748b;font-size:11px;color:#94a3b8;direction:ltr;text-align:left;">
-    DEBUG • uid:${uidOk ? 'ok' : 'MISSING'} • priv:${priv} • grp:${grp} • extGrp:${extGrp} • extChat:${extChat} • refresh:${time}<br>err: ${err}
+    DEBUG • uid:${uidOk ? 'ok' : 'MISSING'} • priv:${priv} • grp:${grp} • extGrp:${extGrp} • extChat:${extChat} • refresh:${time}<br>
+    total:${__notifyMsgsLastTotal} • badgeFound:${__notifyMsgsBadgeFound} • badgeDisplay:${__notifyMsgsBadgeDisplay}<br>
+    err: ${err}
   </div>`;
   box.innerHTML += debugHtml;
 }
