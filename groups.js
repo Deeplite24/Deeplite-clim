@@ -439,20 +439,19 @@
     function updateChatUnreadBadge() {
       const badge = document.getElementById('chat-unread-badge');
       const homeBadge = document.getElementById('badge-chat');
-      const topBadge = document.getElementById('msgs-badge');
+      // ⚠️ ماشي هنا msgs-badge — notify-msgs.js (refreshMsgsBadge) ولات هي المصدر الوحيد
+      // الصحيح ليه (كتجمع كروبات + خاصة + خارجية + دعوات). كانت هاد الدالة كتحسب
+      // كروبات+خاصة غير وكتخبي/تبدل msgs-badge بحسابها الناقص، وهادشي كان كيمحي الرقم
+      // الصحيح اللي حطتو notify-msgs.js بمجرد ما هاد الدالة تتنادى من بعدها.
       const unread = computeGroupChatUnread() + computeTotalPrivateUnread();
       if (unread > 0) {
         if (badge) { badge.innerText = unread > 9 ? '9+' : String(unread); badge.style.display = 'flex'; }
         if (homeBadge) { homeBadge.innerText = unread > 9 ? '9+' : String(unread); homeBadge.style.display = 'flex'; }
-        // ⚠️ تحديث مباشر وبسيط لنفس الشارة الفوقانية (msgs-badge)، بنفس الطريقة المباشرة
-        // اللي كتخدم بيها badge-chat — بلا ما تعدي عبر السلسلة الطويلة ديال
-        // updateBellNotifications/computeMsgsBellTotal اللي كانت كتخيب أحيانا.
-        if (topBadge) { topBadge.innerText = unread > 9 ? '9+' : String(unread); topBadge.style.display = 'flex'; }
       } else {
         if (badge) badge.style.display = 'none';
         if (homeBadge) homeBadge.style.display = 'none';
-        if (topBadge) topBadge.style.display = 'none';
       }
+      if (typeof refreshMsgsBadge === 'function') refreshMsgsBadge();
     }
 
     function scrollChatToBottom() {
